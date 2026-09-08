@@ -1,5 +1,5 @@
 import { getSupabaseServer } from "@/lib/supabase/server";
-import type { Event, MenuItem, Room, SiteSettings } from "@/types";
+import type { Event, MenuCategory, MenuItem, Room, SiteSettings } from "@/types";
 
 export const defaultSettings: SiteSettings = {
   business_name: "1759 Empire Lounge, Hotel & Suites",
@@ -65,16 +65,18 @@ export function resolveEventDate(event: Event) {
 
 export async function getPublicCatalogue() {
   const supabase = await getSupabaseServer();
-  if (!supabase) return { rooms: [] as Room[], menu: [] as MenuItem[], events: [localFeaturedEvent], settings: defaultSettings };
-  const [roomsResult, menuResult, eventsResult, settingsResult] = await Promise.all([
+  if (!supabase) return { rooms: [] as Room[], menu: [] as MenuItem[], categories: [] as MenuCategory[], events: [localFeaturedEvent], settings: defaultSettings };
+  const [roomsResult, menuResult, categoriesResult, eventsResult, settingsResult] = await Promise.all([
     supabase.from("rooms").select("*").eq("is_active", true).order("created_at"),
     supabase.from("menu_items").select("*").eq("is_available", true).order("category").order("name"),
+    supabase.from("menu_categories").select("*").eq("is_active", true).order("sort_order", { ascending: true }),
     supabase.from("events").select("*").eq("is_active", true).eq("is_published", true).order("event_date"),
     supabase.from("site_settings").select("*").eq("id", 1).maybeSingle(),
   ]);
   return {
     rooms: (roomsResult.data || []) as Room[],
     menu: (menuResult.data || []) as MenuItem[],
+    categories: (categoriesResult.data || []) as MenuCategory[],
     events: (eventsResult.data || []).map((event) => ({ ...event, event_date: resolveEventDate(event as Event) })) as Event[],
     settings: { ...defaultSettings, ...(settingsResult.data || {}) } as SiteSettings,
   };

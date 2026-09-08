@@ -46,14 +46,27 @@ create table if not exists bookings (
 create index if not exists bookings_room_dates_idx on bookings(room_id, check_in, check_out);
 create index if not exists bookings_status_idx on bookings(status);
 
+create table if not exists menu_categories (
+  id uuid primary key default gen_random_uuid(),
+  name text not null unique,
+  description text not null default '',
+  sort_order integer not null default 0,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists menu_items (
   id uuid primary key default gen_random_uuid(),
   category text not null,
+  category_id uuid references menu_categories(id) on delete set null,
   name text not null,
   description text default '',
   price numeric(12,2) not null default 0,
+  currency text not null default 'NGN',
   image_url text,
   is_available boolean not null default true,
+  featured boolean not null default false,
+  sort_order integer not null default 0,
   created_at timestamptz not null default now()
 );
 
@@ -71,6 +84,13 @@ create table if not exists events (
   gallery jsonb not null default '[]'::jsonb,
   performers jsonb not null default '[]'::jsonb,
   video_url text,
+  location text,
+  status text not null default 'draft' check (status in ('draft','published','live','completed','cancelled')),
+  livestream_url text,
+  live_title text,
+  live_description text,
+  live_cta text,
+  replay_url text,
   is_active boolean not null default true,
   is_featured boolean not null default false,
   show_countdown boolean not null default false,
@@ -96,7 +116,7 @@ create table if not exists event_reservations (
   utm_campaign text,
   utm_content text,
   amount numeric(12,2) not null default 0,
-  status text not null default 'pending',
+  status text not null default 'new' check (status in ('new','contacted','in_progress','resolved','cancelled')),
   created_at timestamptz not null default now()
 );
 
@@ -118,6 +138,9 @@ create table if not exists general_enquiries (
 create table if not exists media_assets (
   id uuid primary key default gen_random_uuid(),
   section text not null check (section in ('hero','rooms','club','events','food','gallery','venue')),
+  title text not null default '',
+  category text not null default '',
+  event_id uuid references events(id) on delete set null,
   storage_path text not null unique,
   public_url text not null,
   media_type text not null check (media_type in ('image','video')),
@@ -343,7 +366,7 @@ as $$
 declare updated_enquiry event_reservations%rowtype;
 begin
   if not public.is_admin() then raise exception 'NOT_AUTHORIZED'; end if;
-  if p_status not in ('new','contacted','confirmed','cancelled','closed') then raise exception 'INVALID_STATUS'; end if;
+  if p_status not in ('new','contacted','in_progress','resolved','cancelled') then raise exception 'INVALID_STATUS'; end if;
   update event_reservations set status = p_status where id = p_enquiry_id returning * into updated_enquiry;
   if not found then raise exception 'ENQUIRY_NOT_FOUND'; end if;
   return updated_enquiry;

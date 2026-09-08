@@ -5,7 +5,7 @@ import type { EnquiryStatus, EventReservation } from "@/types";
 import TrackedWhatsAppLink from "@/components/TrackedWhatsAppLink";
 
 export type EnquiryRow = EventReservation & { event?: { title: string } | null };
-const statuses: EnquiryStatus[] = ["new", "contacted", "confirmed", "cancelled", "closed"];
+const statuses: EnquiryStatus[] = ["new", "contacted", "in_progress", "resolved", "cancelled"];
 
 export default function AdminEnquiries({ initialEnquiries }: { initialEnquiries: EnquiryRow[] }) {
   const [items, setItems] = useState(initialEnquiries);

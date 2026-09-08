@@ -1,6 +1,7 @@
 export type BookingStatus = "pending" | "confirmed" | "cancelled" | "checked_in" | "checked_out";
 export type PaymentStatus = "unpaid" | "partial" | "paid" | "refunded";
-export type EnquiryStatus = "new" | "contacted" | "confirmed" | "cancelled" | "closed";
+export type EnquiryStatus = "new" | "contacted" | "in_progress" | "resolved" | "cancelled";
+export type EventStatus = "draft" | "published" | "live" | "completed" | "cancelled";
 export type SourceType = "website" | "event" | "whatsapp" | "social" | "referral" | "direct";
 
 export interface Attribution {
@@ -48,14 +49,27 @@ export interface Booking {
   created_at: string;
 }
 
+export interface MenuCategory {
+  id: string;
+  name: string;
+  description: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+}
+
 export interface MenuItem {
   id: string;
   category: string;
+  category_id?: string | null;
   name: string;
   description: string;
   price: number;
+  currency?: string;
   image_url: string | null;
   is_available: boolean;
+  featured?: boolean;
+  sort_order?: number;
   created_at: string;
 }
 
@@ -72,11 +86,19 @@ export interface Event {
   image_url: string | null;
   gallery: string[];
   video_url: string | null;
+  is_active?: boolean;
   is_published: boolean;
   is_featured: boolean;
   show_countdown: boolean;
   show_room_promotion: boolean;
   is_recurring: boolean;
+  status?: EventStatus;
+  location?: string | null;
+  livestream_url?: string | null;
+  live_title?: string | null;
+  live_description?: string | null;
+  live_cta?: string | null;
+  replay_url?: string | null;
   created_at: string;
   performers?: string[];
 }
@@ -119,11 +141,14 @@ export interface GeneralEnquiry {
 export interface MediaAsset {
   id: string;
   section: "hero" | "rooms" | "club" | "events" | "food" | "gallery" | "venue";
+  title?: string;
+  category?: string;
   storage_path: string;
   public_url: string;
   media_type: "image" | "video";
   alt_text: string;
   caption: string;
+  event_id?: string | null;
   is_featured: boolean;
   is_published: boolean;
   display_order: number;

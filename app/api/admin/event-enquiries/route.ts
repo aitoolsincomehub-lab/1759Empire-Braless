@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import type { ActionResponse, EnquiryStatus, EventReservation } from "@/types";
 
-const statuses: EnquiryStatus[] = ["new", "contacted", "confirmed", "cancelled", "closed"];
+const statuses: EnquiryStatus[] = ["new", "contacted", "in_progress", "resolved", "cancelled"];
 export async function PATCH(request: Request) {
   const supabase = await getSupabaseServer();
   if (!supabase) return NextResponse.json<ActionResponse<never>>({ ok: false, error: "Supabase is not configured." }, { status: 503 });
