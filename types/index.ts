@@ -1,0 +1,198 @@
+export type BookingStatus = "pending" | "confirmed" | "cancelled" | "checked_in" | "checked_out";
+export type PaymentStatus = "unpaid" | "partial" | "paid" | "refunded";
+export type EnquiryStatus = "new" | "contacted" | "confirmed" | "cancelled" | "closed";
+export type SourceType = "website" | "event" | "whatsapp" | "social" | "referral" | "direct";
+
+export interface Attribution {
+  source: string;
+  source_type: SourceType;
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_content?: string;
+}
+
+export interface Room {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  price_per_night: number;
+  total_units: number;
+  amenities: string[];
+  images: string[];
+  is_active: boolean;
+}
+
+export interface Booking {
+  id: string;
+  reference: string;
+  room_id: string;
+  guest_name: string;
+  guest_phone: string;
+  guest_email: string | null;
+  guests: number;
+  check_in: string;
+  check_out: string;
+  status: BookingStatus;
+  payment_status: PaymentStatus;
+  amount: number;
+  notes: string;
+  source: string;
+  source_type: SourceType;
+  event_id: string | null;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  utm_content: string | null;
+  created_at: string;
+}
+
+export interface MenuItem {
+  id: string;
+  category: string;
+  name: string;
+  description: string;
+  price: number;
+  image_url: string | null;
+  is_available: boolean;
+  created_at: string;
+}
+
+export interface Event {
+  id: string;
+  title: string;
+  slug: string;
+  event_date: string;
+  event_time: string | null;
+  end_time: string | null;
+  description: string;
+  short_description: string;
+  entry_price: number;
+  image_url: string | null;
+  gallery: string[];
+  video_url: string | null;
+  is_published: boolean;
+  is_featured: boolean;
+  show_countdown: boolean;
+  show_room_promotion: boolean;
+  is_recurring: boolean;
+  created_at: string;
+  performers?: string[];
+}
+
+export interface EventReservation {
+  id: string;
+  event_id: string;
+  guest_name: string;
+  phone: string;
+  email: string | null;
+  people: number;
+  reservation_type: string;
+  message: string;
+  source: string;
+  source_type: SourceType;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  utm_content: string | null;
+  amount: number;
+  status: EnquiryStatus;
+  created_at: string;
+}
+
+export interface GeneralEnquiry {
+  id: string;
+  name: string;
+  phone: string;
+  email: string | null;
+  message: string;
+  source: string;
+  source_type: SourceType;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  utm_content: string | null;
+  created_at: string;
+}
+
+export interface MediaAsset {
+  id: string;
+  section: "hero" | "rooms" | "club" | "events" | "food" | "gallery" | "venue";
+  storage_path: string;
+  public_url: string;
+  media_type: "image" | "video";
+  alt_text: string;
+  caption: string;
+  is_featured: boolean;
+  is_published: boolean;
+  display_order: number;
+  file_size: number;
+  created_at: string;
+}
+
+export interface SiteSettings {
+  business_name: string;
+  address: string;
+  phone: string;
+  whatsapp_number: string;
+  email: string;
+  google_maps_url: string;
+  instagram_url: string;
+  tiktok_url: string;
+  facebook_url: string;
+  opening_hours: string;
+  club_hours: string;
+  booking_contact: string;
+  event_enquiry_contact: string;
+  hero_headline: string;
+  hero_subheadline: string;
+  hero_primary_cta: string;
+  hero_secondary_cta: string;
+  club_description: string;
+  dine_description: string;
+  lounge_description: string;
+  contact_cta: string;
+  hero_media_url: string;
+  show_featured_event: boolean;
+  show_events_section: boolean;
+  show_rooms_section: boolean;
+}
+
+export interface BookingRequest {
+  roomId: string;
+  checkIn: string;
+  checkOut: string;
+  guests: number;
+  guestName: string;
+  guestPhone: string;
+  guestEmail?: string;
+  notes?: string;
+  attribution?: Attribution;
+  eventId?: string;
+}
+
+export interface EventEnquiryRequest extends Attribution {
+  eventId: string;
+  guestName: string;
+  phone: string;
+  email?: string;
+  people: number;
+  enquiryType: "table" | "general" | "vip" | "birthday" | "other";
+  message?: string;
+}
+
+export interface ActionResponse<T> {
+  ok: boolean;
+  data?: T;
+  error?: string;
+  fieldErrors?: Record<string, string>;
+}
+
+export interface DashboardStats {
+  todayBookings: number;
+  pendingBookings: number;
+  confirmedBookings: number;
+  activeRooms: number;
+  upcomingEvents: number;
+}
