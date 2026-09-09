@@ -21,11 +21,12 @@ Open http://localhost:3000
 ## Supabase
 1. Create a Supabase project.
 2. Open SQL Editor.
-3. Run `supabase.sql`.
-4. Add URL + anon key to `.env.local`.
-5. Create a Storage bucket called `hotel-images` with a 10 MB upload limit.
-6. Create staff users in Supabase Auth and set `app_metadata.role` to `admin` using a trusted server-side process.
-7. Configure `NEXT_PUBLIC_WHATSAPP_NUMBER`, `NEXT_PUBLIC_HOTEL_NAME`, and deploy.
+3. Run `supabase.sql` once for the core schema.
+4. For the current media/content engine additions, run the focused migration file `supabase.media-content-engine.sql` from the Dashboard SQL Editor.
+5. Add URL + anon key to `.env.local`.
+6. Keep the existing Supabase Storage bucket assumption: use the single `hotel-images` bucket for uploaded image/video assets and keep `storage_path`, `public_url`, `file_size`, `media_type` persisted in the `media_assets` table.
+7. Create staff users in Supabase Auth and set `app_metadata.role` to `admin` using a trusted server-side process.
+8. Configure `NEXT_PUBLIC_WHATSAPP_NUMBER`, `NEXT_PUBLIC_HOTEL_NAME`, and deploy.
 
 Never expose a service-role key to the browser.
 

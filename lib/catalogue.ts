@@ -1,5 +1,5 @@
 import { getSupabaseServer } from "@/lib/supabase/server";
-import type { Event, MenuCategory, MenuItem, Room, SiteSettings } from "@/types";
+import type { Event, MediaAsset, MenuCategory, MenuItem, Room, SiteSettings } from "@/types";
 
 export const defaultSettings: SiteSettings = {
   business_name: "1759 Empire Lounge, Hotel & Suites",
@@ -23,7 +23,7 @@ export const defaultSettings: SiteSettings = {
   dine_description: "Food for the table. Energy for the night.",
   lounge_description: "A social destination for good food, drinks, football and the big moments.",
   contact_cta: "Ready to stay, dine or celebrate?",
-  hero_media_url: "",
+  hero_media_url: "/assets/visual-assets/1759-empire-visual-assets/1001754455.jpg",
   show_featured_event: true,
   show_events_section: true,
   show_rooms_section: true,
@@ -38,8 +38,11 @@ const localFeaturedEvent: Event = {
   description: "SOUND — BEYOND THE BEAT at 1759 Empire.",
   short_description: "A night of sound, performance and atmosphere at 1759 Empire.",
   entry_price: 0,
-  image_url: "/media_stills/sound-stage-01.jpg",
-  gallery: ["/media_stills/sound-dj-01.jpg", "/media_stills/sound-interview-01.jpg"],
+  image_url: "/assets/visual-assets/1759-empire-visual-assets/1001754455.jpg",
+  gallery: [
+    "/assets/visual-assets/1759-empire-visual-assets/1001754454.jpg",
+    "/assets/visual-assets/1759-empire-visual-assets/1001754456.jpg",
+  ],
   video_url: null,
   is_published: true,
   is_featured: true,
@@ -63,15 +66,24 @@ export function resolveEventDate(event: Event) {
   return event.is_recurring && event.title.trim().toLowerCase() === "braless party" ? nextLastSaturday() : event.event_date;
 }
 
+export function findBralessEvent(events: Event[]) {
+  return events.find((event) => {
+    const title = event.title.toLowerCase();
+    const slug = event.slug.toLowerCase();
+    return title.includes("braless") || slug.includes("braless") || (event.is_recurring && title.includes("party"));
+  }) || null;
+}
+
 export async function getPublicCatalogue() {
   const supabase = await getSupabaseServer();
-  if (!supabase) return { rooms: [] as Room[], menu: [] as MenuItem[], categories: [] as MenuCategory[], events: [localFeaturedEvent], settings: defaultSettings };
-  const [roomsResult, menuResult, categoriesResult, eventsResult, settingsResult] = await Promise.all([
+  if (!supabase) return { rooms: [] as Room[], menu: [] as MenuItem[], categories: [] as MenuCategory[], events: [localFeaturedEvent], settings: defaultSettings, media: [] as MediaAsset[] };
+  const [roomsResult, menuResult, categoriesResult, eventsResult, settingsResult, mediaResult] = await Promise.all([
     supabase.from("rooms").select("*").eq("is_active", true).order("created_at"),
     supabase.from("menu_items").select("*").eq("is_available", true).order("category").order("name"),
     supabase.from("menu_categories").select("*").eq("is_active", true).order("sort_order", { ascending: true }),
     supabase.from("events").select("*").eq("is_active", true).eq("is_published", true).order("event_date"),
     supabase.from("site_settings").select("*").eq("id", 1).maybeSingle(),
+    supabase.from("media_assets").select("*").eq("is_published", true).order("display_order", { ascending: true }).order("created_at", { ascending: false }),
   ]);
   return {
     rooms: (roomsResult.data || []) as Room[],
@@ -79,6 +91,7 @@ export async function getPublicCatalogue() {
     categories: (categoriesResult.data || []) as MenuCategory[],
     events: (eventsResult.data || []).map((event) => ({ ...event, event_date: resolveEventDate(event as Event) })) as Event[],
     settings: { ...defaultSettings, ...(settingsResult.data || {}) } as SiteSettings,
+    media: (mediaResult.data || []) as MediaAsset[],
   };
 }
 

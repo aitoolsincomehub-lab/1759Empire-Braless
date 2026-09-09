@@ -83,6 +83,7 @@ create table if not exists events (
   short_description text not null default '',
   gallery jsonb not null default '[]'::jsonb,
   performers jsonb not null default '[]'::jsonb,
+  performer_socials jsonb not null default '[]'::jsonb,
   video_url text,
   location text,
   status text not null default 'draft' check (status in ('draft','published','live','completed','cancelled')),
@@ -137,10 +138,23 @@ create table if not exists general_enquiries (
 
 create table if not exists media_assets (
   id uuid primary key default gen_random_uuid(),
-  section text not null check (section in ('hero','rooms','club','events','food','gallery','venue')),
+  section text not null check (section in ('hero','rooms','club','events','food','gallery','venue','braless','media','tv','dj','conversation','fm')),
   title text not null default '',
   category text not null default '',
+  platform text not null default 'website' check (platform in ('website','youtube','mixcloud','instagram','tiktok','short_form')),
+  content_type text not null default 'website_media' check (content_type in ('website_media','event_highlight','event_teaser','dj_clip','interview_clip','guest_reaction','food_clip','nightlife_clip','behind_the_scenes','announcement','countdown','promotional_clip','event_recap','dj_set','podcast','short','event','braless','dj_mix','tv','conversation','fm')),
+  external_url text not null default '',
+  video_id text not null default '',
+  thumbnail_url text not null default '',
   event_id uuid references events(id) on delete set null,
+  campaign_name text not null default '',
+  campaign_slug text not null default '',
+  publish_date date,
+  social_caption text not null default '',
+  call_to_action text not null default '',
+  hashtags text not null default '',
+  duration_seconds integer,
+  status text not null default 'draft' check (status in ('draft','ready','published','archived')),
   storage_path text not null unique,
   public_url text not null,
   media_type text not null check (media_type in ('image','video')),
@@ -165,6 +179,13 @@ alter table events add column if not exists show_countdown boolean not null defa
 alter table events add column if not exists show_room_promotion boolean not null default true;
 alter table events add column if not exists is_published boolean not null default true;
 alter table events add column if not exists is_recurring boolean not null default false;
+alter table events add column if not exists stream_platform text not null default 'youtube';
+alter table events add column if not exists stream_url text not null default '';
+alter table events add column if not exists stream_status text not null default 'coming_soon';
+alter table events add column if not exists stream_title text not null default '';
+alter table events add column if not exists stream_description text not null default '';
+alter table events add column if not exists poster_image text not null default '';
+alter table events add column if not exists is_live boolean not null default false;
 create unique index if not exists events_slug_idx on events(slug) where slug is not null;
 
 alter table bookings add column if not exists reference text;
@@ -196,6 +217,14 @@ alter table media_assets add column if not exists caption text not null default 
 alter table media_assets add column if not exists is_featured boolean not null default false;
 alter table media_assets add column if not exists is_published boolean not null default true;
 alter table media_assets add column if not exists display_order integer not null default 0;
+alter table media_assets add column if not exists campaign_name text not null default '';
+alter table media_assets add column if not exists campaign_slug text not null default '';
+alter table media_assets add column if not exists publish_date date;
+alter table media_assets add column if not exists social_caption text not null default '';
+alter table media_assets add column if not exists call_to_action text not null default '';
+alter table media_assets add column if not exists hashtags text not null default '';
+alter table media_assets add column if not exists duration_seconds integer;
+alter table media_assets add column if not exists status text not null default 'draft' check (status in ('draft','ready','published','archived'));
 
 create table if not exists site_settings (
   id integer primary key default 1 check (id = 1),

@@ -73,6 +73,15 @@ export interface MenuItem {
   created_at: string;
 }
 
+export interface PerformerSocial {
+  name: string;
+  instagram?: string | null;
+  tiktok?: string | null;
+  youtube?: string | null;
+  mixcloud?: string | null;
+  website?: string | null;
+}
+
 export interface Event {
   id: string;
   title: string;
@@ -99,8 +108,16 @@ export interface Event {
   live_description?: string | null;
   live_cta?: string | null;
   replay_url?: string | null;
+  stream_platform?: string | null;
+  stream_url?: string | null;
+  stream_status?: string | null;
+  stream_title?: string | null;
+  stream_description?: string | null;
+  poster_image?: string | null;
+  is_live?: boolean;
   created_at: string;
   performers?: string[];
+  performer_socials?: PerformerSocial[];
 }
 
 export interface EventReservation {
@@ -138,17 +155,35 @@ export interface GeneralEnquiry {
   created_at: string;
 }
 
+export type MediaAssetSection = "hero" | "rooms" | "club" | "events" | "food" | "gallery" | "venue" | "braless" | "media" | "tv" | "dj" | "conversation" | "fm";
+export type MediaPlatform = "website" | "youtube" | "mixcloud" | "instagram" | "tiktok" | "short_form";
+export type MediaContentType = "website_media" | "event_highlight" | "event_teaser" | "dj_clip" | "interview_clip" | "guest_reaction" | "food_clip" | "nightlife_clip" | "behind_the_scenes" | "announcement" | "countdown" | "promotional_clip" | "event_recap" | "dj_set" | "podcast" | "short" | "event" | "braless" | "dj_mix" | "tv" | "conversation" | "fm";
+export type MediaCampaignStatus = "draft" | "ready" | "published" | "archived";
+
 export interface MediaAsset {
   id: string;
-  section: "hero" | "rooms" | "club" | "events" | "food" | "gallery" | "venue";
+  section: MediaAssetSection;
   title?: string;
   category?: string;
+  platform?: MediaPlatform;
+  content_type?: MediaContentType;
+  external_url?: string | null;
+  video_id?: string | null;
+  thumbnail_url?: string | null;
   storage_path: string;
   public_url: string;
   media_type: "image" | "video";
   alt_text: string;
   caption: string;
   event_id?: string | null;
+  campaign_name?: string | null;
+  campaign_slug?: string | null;
+  publish_date?: string | null;
+  social_caption?: string | null;
+  call_to_action?: string | null;
+  hashtags?: string | null;
+  duration_seconds?: number | null;
+  status?: MediaCampaignStatus | null;
   is_featured: boolean;
   is_published: boolean;
   display_order: number;
