@@ -68,14 +68,14 @@ function getActiveClass(href: string, pathname: string | null) {
   return pathname === href ? "adminDeskNavItem active" : "adminDeskNavItem";
 }
 
-export function AdminPageHeader({ eyebrow, title, description, action, actionHref = "/admin" }: { eyebrow?: string; title: string; description: string; action?: string; actionHref?: string }) {
+export function AdminPageHeader({ eyebrow, title, description, action, actionHref = "/admin", secondaryAction, secondaryActionHref = "/admin" }: { eyebrow?: string; title: string; description: string; action?: string; actionHref?: string; secondaryAction?: string; secondaryActionHref?: string }) {
   return <section className="adminPageHeader">
     <div>
       {eyebrow && <span className="adminEyebrow">{eyebrow}</span>}
       <h1>{title}</h1>
       <p className="adminIntro">{description}</p>
     </div>
-    {action && <Link className="adminPrimaryButton" href={actionHref}>{action}</Link>}
+    {(action || secondaryAction) && <div className="adminPageHeaderActions">{action && <Link className="adminPrimaryButton" href={actionHref}>{action}</Link>}{secondaryAction && <Link className="adminSecondaryButton" href={secondaryActionHref}>{secondaryAction}</Link>}</div>}
   </section>;
 }
 

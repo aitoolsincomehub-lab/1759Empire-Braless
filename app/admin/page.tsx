@@ -31,7 +31,7 @@ export default async function AdminDashboard() {
   }, {});
 
   return <>
-    <AdminPageHeader eyebrow="OVERVIEW" title="Good evening." description="A clear view of what needs attention at 1759 Empire." action="Add booking" actionHref="/admin/sales/bookings" />
+    <AdminPageHeader eyebrow="OVERVIEW" title="Good evening." description="A clear view of what needs attention at 1759 Empire." action="Add booking" actionHref="/admin/sales/bookings" secondaryAction="Manage Media & Photos" secondaryActionHref="/admin/media" />
 
     <section className="adminKpiGrid">
       <AdminStatCard label="Today's bookings" value={todayBookings.count ?? 0} />
@@ -66,7 +66,6 @@ export default async function AdminDashboard() {
             <div><span>Booking status</span><strong>Synced</strong></div>
             <div><span>Media library</span><strong>Ready</strong></div>
           </div>
-          <Link className="adminSecondaryButton" href="/admin/media">Manage media</Link>
         </AdminSectionCard>
       </div>
     </div>
