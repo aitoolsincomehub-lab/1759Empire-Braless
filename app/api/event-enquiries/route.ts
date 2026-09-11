@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { sendEventEnquiryNotificationEmails } from "@/lib/email";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import type { ActionResponse, EventEnquiryRequest, EventReservation } from "@/types";
 
@@ -23,5 +24,23 @@ export async function POST(request: Request) {
   const value = parsed.value!;
   const { data, error } = await supabase.rpc("create_event_enquiry", { p_event_id: value.eventId, p_guest_name: value.guestName, p_phone: value.phone, p_email: value.email || null, p_people: value.people, p_enquiry_type: value.enquiryType, p_message: value.message || "", p_source: value.source, p_source_type: value.source_type, p_utm_source: value.utm_source || null, p_utm_medium: value.utm_medium || null, p_utm_campaign: value.utm_campaign || null, p_utm_content: value.utm_content || null });
   if (error) return NextResponse.json<ActionResponse<never>>({ ok: false, error: "We could not save the enquiry. Please try WhatsApp instead." }, { status: 500 });
-  return NextResponse.json<ActionResponse<EventReservation>>({ ok: true, data: data as EventReservation }, { status: 201 });
+
+  const reservation = data as EventReservation | null;
+  try {
+    const { data: event } = await supabase.from("events").select("title, event_date").eq("id", value.eventId).maybeSingle();
+    await sendEventEnquiryNotificationEmails({
+      enquiryId: reservation?.id || value.eventId,
+      eventTitle: event?.title || "1759 Empire event",
+      eventDate: event?.event_date || null,
+      guestName: value.guestName,
+      phone: value.phone,
+      email: value.email || null,
+      people: value.people,
+      enquiryType: value.enquiryType,
+    });
+  } catch (emailError) {
+    console.error("event enquiry email notification failed", emailError);
+  }
+
+  return NextResponse.json<ActionResponse<EventReservation>>({ ok: true, data: reservation || (data as EventReservation) }, { status: 201 });
 }

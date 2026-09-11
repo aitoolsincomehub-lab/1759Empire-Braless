@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import sharp from "sharp";
 import { getSupabaseServer } from "@/lib/supabase/server";
 
 const limits: Record<string, number> = { hero: 1, rooms: 8, club: 12, events: 6, food: 12, gallery: 12, venue: 12, braless: 6, media: 12, tv: 12, dj: 12, conversation: 12, fm: 6 };
@@ -6,6 +7,12 @@ const imageTypes = ["image/jpeg", "image/png", "image/webp"];
 const videoTypes = ["video/mp4", "video/webm", "video/quicktime"];
 const contentTypes = ["website_media", "event_highlight", "event_teaser", "dj_clip", "interview_clip", "guest_reaction", "food_clip", "nightlife_clip", "behind_the_scenes", "announcement", "countdown", "promotional_clip", "event_recap", "dj_set", "podcast", "short", "event", "braless", "dj_mix", "tv", "conversation", "fm"] as const;
 const platforms = ["website", "youtube", "mixcloud", "instagram", "tiktok", "short_form"] as const;
+
+function originalPathFor(runtimePath: string) {
+  const parts = runtimePath.split("/");
+  const fileName = parts.pop() || "source";
+  return ["originals", ...parts, fileName.replace(/\.webp$/i, "")].join("/");
+}
 
 async function getAdmin() {
   const supabase = await getSupabaseServer();
@@ -55,6 +62,7 @@ export async function POST(request: Request) {
   const hashtags = (form.get("hashtags") || "").toString();
   const durationSeconds = Number(form.get("durationSeconds") || 0);
   const status = (form.get("status") || "draft").toString();
+  const replaceId = (form.get("replaceId") || "").toString();
   if (!(file instanceof File) || typeof section !== "string" || !(section in limits)) return NextResponse.json({ ok: false, error: "Choose a valid file and section." }, { status: 400 });
   if (!platforms.includes(platform as typeof platforms[number])) return NextResponse.json({ ok: false, error: "Choose a supported platform." }, { status: 400 });
   if (!contentTypes.includes(contentType as typeof contentTypes[number])) return NextResponse.json({ ok: false, error: "Choose a supported content type." }, { status: 400 });
@@ -63,13 +71,28 @@ export async function POST(request: Request) {
   const maxSize = videoTypes.includes(file.type) ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
   if (!allowed.includes(file.type) || file.size > maxSize) return NextResponse.json({ ok: false, error: videoTypes.includes(file.type) ? "Use MP4/WebM/MOV video under 100 MB." : "Use JPG, PNG, or WebP images under 10 MB." }, { status: 400 });
   const { count } = await supabase.from("media_assets").select("id", { count: "exact", head: true }).eq("section", section).eq("is_published", true);
-  if ((count || 0) >= limits[section]) return NextResponse.json({ ok: false, error: `The ${section} media limit is ${limits[section]}. Delete or replace an existing asset first.` }, { status: 409 });
+  if (!replaceId && (count || 0) >= limits[section]) return NextResponse.json({ ok: false, error: `The ${section} media limit is ${limits[section]}. Delete or replace an existing asset first.` }, { status: 409 });
+  let existing: { id: string; storage_path: string } | null = null;
+  if (replaceId) {
+    const { data } = await supabase.from("media_assets").select("id, storage_path").eq("id", replaceId).maybeSingle();
+    if (!data) return NextResponse.json({ ok: false, error: "The media item to replace could not be found." }, { status: 404 });
+    existing = data;
+  }
   const safeName = file.name.toLowerCase().replace(/[^a-z0-9.-]+/g, "-");
-  const path = `${section}/${crypto.randomUUID()}-${safeName}`;
-  const upload = await supabase.storage.from("hotel-images").upload(path, file, { contentType: file.type, upsert: false });
-  if (upload.error) return NextResponse.json({ ok: false, error: "The file could not be uploaded. Please try again." }, { status: 500 });
-  const { data: publicUrl } = supabase.storage.from("hotel-images").getPublicUrl(path);
-  const { data, error } = await supabase.from("media_assets").insert({
+  const imageUpload = imageTypes.includes(file.type);
+  const runtimePath = imageUpload ? `${section}/${crypto.randomUUID()}-${safeName.replace(/\.[^.]+$/, "")}.webp` : `${section}/${crypto.randomUUID()}-${safeName}`;
+  const originalPath = imageUpload ? originalPathFor(runtimePath) : null;
+  const sourceBuffer = imageUpload ? Buffer.from(await file.arrayBuffer()) : null;
+  const runtimeBuffer = imageUpload ? await sharp(sourceBuffer!).rotate().webp({ quality: 82 }).toBuffer() : null;
+  const originalUpload = originalPath ? await supabase.storage.from("hotel-images").upload(originalPath, sourceBuffer!, { contentType: file.type, upsert: false }) : null;
+  if (originalUpload?.error) return NextResponse.json({ ok: false, error: "The original image could not be stored. Please try again." }, { status: 500 });
+  const upload = await supabase.storage.from("hotel-images").upload(runtimePath, runtimeBuffer || file, { contentType: imageUpload ? "image/webp" : file.type, upsert: false });
+  if (upload.error) {
+    if (originalPath) await supabase.storage.from("hotel-images").remove([originalPath]);
+    return NextResponse.json({ ok: false, error: "The file could not be uploaded. Please try again." }, { status: 500 });
+  }
+  const { data: publicUrl } = supabase.storage.from("hotel-images").getPublicUrl(runtimePath);
+  const payload = {
     section,
     title: typeof title === "string" ? title.slice(0, 120) : "",
     category: typeof category === "string" ? category.slice(0, 60) : "",
@@ -87,18 +110,29 @@ export async function POST(request: Request) {
     hashtags: hashtags.slice(0, 120),
     duration_seconds: Number.isFinite(durationSeconds) && durationSeconds > 0 ? durationSeconds : null,
     status,
-    storage_path: path,
+    storage_path: runtimePath,
     public_url: publicUrl.publicUrl,
     media_type: videoTypes.includes(file.type) ? "video" : "image",
     alt_text: typeof altText === "string" ? altText.slice(0, 160) : "",
     caption: typeof caption === "string" ? caption.slice(0, 300) : "",
     is_featured: isFeatured === "true",
-    is_published: isPublished !== "false",
+    is_published: isPublished === "true" || status === "published",
     display_order: Number.isFinite(displayOrder) ? displayOrder : 0,
     file_size: file.size,
-  }).select().single();
-  if (error) { await supabase.storage.from("hotel-images").remove([path]); return NextResponse.json({ ok: false, error: "Media metadata could not be saved." }, { status: 500 }); }
-  return NextResponse.json({ ok: true, data }, { status: 201 });
+  };
+  const recordQuery = existing
+    ? supabase.from("media_assets").update(payload).eq("id", existing.id).select().single()
+    : supabase.from("media_assets").insert(payload).select().single();
+  const { data, error } = await recordQuery;
+  if (error) {
+    await supabase.storage.from("hotel-images").remove([runtimePath, ...(originalPath ? [originalPath] : [])]);
+    return NextResponse.json({ ok: false, error: "Media metadata could not be saved." }, { status: 500 });
+  }
+  if (existing) {
+    const oldPaths = [existing.storage_path, originalPathFor(existing.storage_path)];
+    await supabase.storage.from("hotel-images").remove(oldPaths.filter((path) => path !== runtimePath));
+  }
+  return NextResponse.json({ ok: true, data, optimized: imageUpload, replaced: Boolean(existing) }, { status: 201 });
 }
 
 export async function PATCH(request: Request) {
@@ -144,6 +178,7 @@ export async function DELETE(request: Request) {
   if (typeof input?.id !== "string" || typeof input.path !== "string") return NextResponse.json({ ok: false, error: "Invalid media item." }, { status: 400 });
   const removed = await supabase.storage.from("hotel-images").remove([input.path]);
   if (removed.error) return NextResponse.json({ ok: false, error: "File could not be removed." }, { status: 500 });
+  await supabase.storage.from("hotel-images").remove([originalPathFor(input.path)]);
   const { error } = await supabase.from("media_assets").delete().eq("id", input.id);
   if (error) return NextResponse.json({ ok: false, error: "Media record could not be removed." }, { status: 500 });
   return NextResponse.json({ ok: true });

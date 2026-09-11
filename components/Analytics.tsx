@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { trackEvent } from "@/lib/analytics";
 
-const FALLBACK_GA_MEASUREMENT_ID = "G-CCVSKMKNBS";
+const FALLBACK_GA_MEASUREMENT_ID = "G-CCVSKMKN";
 
 export default function Analytics() {
   const measurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || FALLBACK_GA_MEASUREMENT_ID;

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { sendBookingNotificationEmails } from "@/lib/email";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import type { ActionResponse, Booking, BookingRequest } from "@/types";
 
@@ -59,5 +60,26 @@ export async function POST(request: Request) {
     const message = error.message.includes("ROOM_UNAVAILABLE") ? "That room is no longer available for those dates." : "We could not submit the request. Please try again or contact 1759.";
     return NextResponse.json<ActionResponse<never>>({ ok: false, error: message }, { status: error.message.includes("ROOM_UNAVAILABLE") ? 409 : 500 });
   }
-  return NextResponse.json<ActionResponse<Booking>>({ ok: true, data: data as Booking }, { status: 201 });
+
+  const booking = data as Booking | null;
+  if (booking) {
+    try {
+      const { data: room } = await supabase.from("rooms").select("name").eq("id", booking.room_id || parsed.value!.roomId).maybeSingle();
+      await sendBookingNotificationEmails({
+        bookingReference: booking.reference || booking.id,
+        roomName: room?.name || "1759 Empire room",
+        checkIn: booking.check_in || parsed.value!.checkIn,
+        checkOut: booking.check_out || parsed.value!.checkOut,
+        guests: booking.guests || parsed.value!.guests,
+        amount: Number(booking.amount || 0),
+        status: booking.status || "pending",
+        source: booking.source || parsed.value!.attribution?.source || "Website",
+        guestEmail: booking.guest_email ?? parsed.value!.guestEmail ?? null,
+      });
+    } catch (emailError) {
+      console.error("booking email notification failed", emailError);
+    }
+  }
+
+  return NextResponse.json<ActionResponse<Booking>>({ ok: true, data: booking || (data as Booking) }, { status: 201 });
 }

@@ -1,27 +1,75 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSupabaseServer } from "@/lib/supabase/server";
+import { AdminPageHeader, AdminSectionCard, AdminStatCard } from "@/components/AdminShell";
 import AdminBookings, { type BookingRow } from "@/components/AdminBookings";
-import AdminWorkspace from "@/components/AdminWorkspace";
 import AdminEnquiries, { type EnquiryRow } from "@/components/AdminEnquiries";
 import AdminGeneralEnquiries from "@/components/AdminGeneralEnquiries";
-import MediaUploader from "@/components/MediaUploader";
-import { defaultSettings } from "@/lib/catalogue";
-import type { Event, MenuCategory, MenuItem, Room, SiteSettings } from "@/types";
-
-const sections = [{ label: "Rooms", href: "#catalogue" }, { label: "Bookings", href: "#bookings" }, { label: "Enquiries", href: "#enquiries" }, { label: "Events", href: "#catalogue" }, { label: "Food & Drinks", href: "#catalogue" }, { label: "Media", href: "#media" }, { label: "Business Information", href: "#catalogue" }];
+import type { GeneralEnquiry } from "@/types";
 
 export default async function AdminDashboard() {
   const supabase = await getSupabaseServer();
-  if (!supabase) return <AdminMessage text="The staff dashboard is temporarily unavailable. Please contact your manager." />;
+  if (!supabase) redirect("/admin/login");
   const { data: { user } } = await supabase.auth.getUser();
   if (!user || user.app_metadata?.role !== "admin") redirect("/admin/login");
+
   const today = new Date().toISOString().slice(0, 10);
-  const [rooms, bookings, events, todayBookings, recentBookings, recentEnquiries, recentGeneralEnquiries, roomRows, eventRows, menuRows, categoryRows, settingsRow] = await Promise.all([supabase.from("rooms").select("id", { count: "exact", head: true }).eq("is_active", true), supabase.from("bookings").select("id", { count: "exact", head: true }).eq("status", "pending"), supabase.from("events").select("id", { count: "exact", head: true }).eq("is_active", true).gte("event_date", today), supabase.from("bookings").select("id", { count: "exact", head: true }).eq("check_in", today), supabase.from("bookings").select("*, room:rooms(name)").order("created_at", { ascending: false }).limit(20), supabase.from("event_reservations").select("*, event:events(title)").order("created_at", { ascending: false }).limit(20), supabase.from("general_enquiries").select("*").order("created_at", { ascending: false }).limit(20), supabase.from("rooms").select("*").order("created_at", { ascending: false }), supabase.from("events").select("*").order("event_date", { ascending: false }), supabase.from("menu_items").select("*").order("created_at", { ascending: false }), supabase.from("menu_categories").select("*").order("sort_order", { ascending: true }), supabase.from("site_settings").select("*").eq("id", 1).maybeSingle()]);
-  const enquiries = (recentEnquiries.data || []) as Array<{ source: string; event?: { title: string } | null }>;
-  const sourceCounts = enquiries.reduce<Record<string, number>>((counts, enquiry) => { const source = enquiry.source || "Direct"; counts[source] = (counts[source] || 0) + 1; return counts; }, {});
-  return <main className="adminPage"><aside className="adminSidebar"><Link className="brand" href="/">1759 <span>EMPIRE</span></Link><p className="eyebrow">STAFF DESK</p><nav>{sections.map((section) => <a href={section.href} key={section.label}>{section.label}</a>)}</nav><Link href="/" className="textLink dark">View website</Link></aside><section className="adminContent"><p className="eyebrow">OVERVIEW</p><h1>Good evening.</h1><p className="muted">A clear view of what needs attention at 1759 Empire.</p><div className="dashboardCards"><Stat label="Today's bookings" value={todayBookings.count ?? 0} /><Stat label="Pending bookings" value={bookings.count ?? 0} /><Stat label="Upcoming events" value={events.count ?? 0} /><Stat label="New event enquiries" value={recentEnquiries.data?.filter((enquiry) => enquiry.status === "new").length ?? 0} /></div><div id="bookings"><AdminBookings initialBookings={(recentBookings.data || []) as BookingRow[]} /></div><div id="enquiries"><AdminEnquiries initialEnquiries={(recentEnquiries.data || []) as EnquiryRow[]} /><AdminGeneralEnquiries items={(recentGeneralEnquiries.data || []) as import("@/types").GeneralEnquiry[]} /></div><div className="adminPanel"><div className="panelHeading"><h2>Where enquiries are coming from</h2><span>Stored event enquiries</span></div>{Object.keys(sourceCounts).length === 0 ? <p className="muted">Source insights will appear after the first enquiry.</p> : Object.entries(sourceCounts).sort(([, first], [, second]) => second - first).map(([source, count]) => <div className="sourceRow" key={source}><span>{source}</span><strong>{count}</strong></div>)}</div><div id="catalogue"><AdminWorkspace rooms={(roomRows.data || []) as Room[]} events={(eventRows.data || []) as Event[]} menu={(menuRows.data || []) as MenuItem[]} categories={(categoryRows.data || []) as MenuCategory[]} settings={{ ...defaultSettings, ...(settingsRow.data || {}) } as SiteSettings} /></div><div id="media"><MediaUploader /></div></section></main>;
+  const [roomsCount, bookingsPending, eventsCount, todayBookings, recentBookings, recentEnquiries, recentGeneralEnquiries] = await Promise.all([
+    supabase.from("rooms").select("id", { count: "exact", head: true }).eq("is_active", true),
+    supabase.from("bookings").select("id", { count: "exact", head: true }).eq("status", "pending"),
+    supabase.from("events").select("id", { count: "exact", head: true }).eq("is_active", true).gte("event_date", today),
+    supabase.from("bookings").select("id", { count: "exact", head: true }).eq("check_in", today),
+    supabase.from("bookings").select("*, room:rooms(name)").order("created_at", { ascending: false }).limit(8),
+    supabase.from("event_reservations").select("*, event:events(title)").order("created_at", { ascending: false }).limit(8),
+    supabase.from("general_enquiries").select("*").order("created_at", { ascending: false }).limit(8)
+  ]);
+
+  const sourceCounts = (recentEnquiries.data || []).reduce<Record<string, number>>((counts, enquiry) => {
+    const source = (enquiry as { source?: string }).source || "Direct";
+    counts[source] = (counts[source] || 0) + 1;
+    return counts;
+  }, {});
+
+  return <>
+    <AdminPageHeader eyebrow="OVERVIEW" title="Good evening." description="A clear view of what needs attention at 1759 Empire." action="Add booking" actionHref="/admin/sales/bookings" />
+
+    <section className="adminKpiGrid">
+      <AdminStatCard label="Today's bookings" value={todayBookings.count ?? 0} />
+      <AdminStatCard label="Pending bookings" value={bookingsPending.count ?? 0} />
+      <AdminStatCard label="Upcoming events" value={eventsCount.count ?? 0} />
+      <AdminStatCard label="New enquiries" value={recentEnquiries.data?.filter((enquiry) => (enquiry as { status?: string }).status === "new").length ?? 0} />
+    </section>
+
+    <div className="adminDashboardGrid">
+      <div className="adminDashboardLeft">
+        <AdminSectionCard title="Recent bookings">
+          <AdminBookings initialBookings={(recentBookings.data || []) as BookingRow[]} />
+        </AdminSectionCard>
+
+        <AdminSectionCard title="Event enquiries">
+          <AdminEnquiries initialEnquiries={(recentEnquiries.data || []) as EnquiryRow[]} />
+        </AdminSectionCard>
+
+        <AdminSectionCard title="General enquiries">
+          <AdminGeneralEnquiries items={(recentGeneralEnquiries.data || []) as GeneralEnquiry[]} />
+        </AdminSectionCard>
+      </div>
+
+      <div className="adminDashboardRight">
+        <AdminSectionCard title="Where enquiries are coming from">
+          {Object.keys(sourceCounts).length === 0 ? <p className="muted">Source insights will appear after the first enquiry.</p> : Object.entries(sourceCounts).sort(([, first], [, second]) => second - first).map(([source, count]) => <div className="sourceRow" key={source}><span>{source}</span><strong>{count}</strong></div>)}
+        </AdminSectionCard>
+
+        <AdminSectionCard title="Operations">
+          <div className="adminMiniList">
+            <div><span>Rooms active</span><strong>{roomsCount.count ?? 0}</strong></div>
+            <div><span>Booking status</span><strong>Synced</strong></div>
+            <div><span>Media library</span><strong>Ready</strong></div>
+          </div>
+          <Link className="adminSecondaryButton" href="/admin/media">Manage media</Link>
+        </AdminSectionCard>
+      </div>
+    </div>
+  </>;
 }
 
-function Stat({ label, value }: { label: string; value: number }) { return <div className="stat"><span>{label}</span><strong>{value}</strong></div>; }
-function AdminMessage({ text }: { text: string }) { return <main className="bookingPage"><div className="bookingWrap"><p className="eyebrow">STAFF DESK</p><h1>Dashboard<br /><em>unavailable.</em></h1><p className="muted">{text}</p><Link className="button" href="/">Back home</Link></div></main>; }

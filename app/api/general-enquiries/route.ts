@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { sendGeneralEnquiryNotificationEmails } from "@/lib/email";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import type { ActionResponse, Attribution } from "@/types";
 
@@ -15,5 +16,19 @@ export async function POST(request: Request) {
   if (!supabase) return NextResponse.json<ActionResponse<never>>({ ok: false, error: "Please contact 1759 directly to send your enquiry." }, { status: 503 });
   const { data, error } = await supabase.rpc("create_general_enquiry", { p_name: name, p_phone: phone, p_email: email || null, p_message: message, p_source: clean(attribution.source, 80) || "Website", p_source_type: sourceType, p_utm_source: clean(attribution.utm_source, 100) || null, p_utm_medium: clean(attribution.utm_medium, 100) || null, p_utm_campaign: clean(attribution.utm_campaign, 150) || null, p_utm_content: clean(attribution.utm_content, 150) || null });
   if (error) return NextResponse.json<ActionResponse<never>>({ ok: false, error: "We could not save your enquiry. Please try WhatsApp instead." }, { status: 500 });
-  return NextResponse.json<ActionResponse<{ id: string }>>({ ok: true, data: data as { id: string } }, { status: 201 });
+
+  const enquiryId = typeof data === "string" ? data : "general-enquiry";
+  try {
+    await sendGeneralEnquiryNotificationEmails({
+      enquiryId,
+      name,
+      phone,
+      email: email || null,
+      message,
+    });
+  } catch (emailError) {
+    console.error("general enquiry email notification failed", emailError);
+  }
+
+  return NextResponse.json<ActionResponse<string>>({ ok: true, data: enquiryId }, { status: 201 });
 }

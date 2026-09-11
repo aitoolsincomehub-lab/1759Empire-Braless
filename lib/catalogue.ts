@@ -23,35 +23,27 @@ export const defaultSettings: SiteSettings = {
   dine_description: "Food for the table. Energy for the night.",
   lounge_description: "A social destination for good food, drinks, football and the big moments.",
   contact_cta: "Ready to stay, dine or celebrate?",
-  hero_media_url: "/assets/visual-assets/1759-empire-visual-assets/1001754455.jpg",
+  hero_media_url: "/assets/hero/1759-exterior-current-hero.webp",
   show_featured_event: true,
   show_events_section: true,
   show_rooms_section: true,
 };
-const localFeaturedEvent: Event = {
-  id: "00000000-0000-4000-8000-000000000175",
-  title: "SOUND — BEYOND THE BEAT",
-  slug: "sound-beyond-the-beat",
-  event_date: "2026-09-12",
-  event_time: null,
-  end_time: null,
-  description: "SOUND — BEYOND THE BEAT at 1759 Empire.",
-  short_description: "A night of sound, performance and atmosphere at 1759 Empire.",
-  entry_price: 0,
-  image_url: "/assets/visual-assets/1759-empire-visual-assets/1001754455.jpg",
-  gallery: [
-    "/assets/visual-assets/1759-empire-visual-assets/1001754454.jpg",
-    "/assets/visual-assets/1759-empire-visual-assets/1001754456.jpg",
-  ],
-  video_url: null,
-  is_published: true,
-  is_featured: true,
-  show_countdown: true,
-  show_room_promotion: true,
-  is_recurring: false,
-  created_at: "2026-01-01T00:00:00.000Z",
-  performers: ["Orisa King", "Abike Ilu", "Vicky Gey Guitarist", "Slatt Soundz", "Hypeman Sky"],
-};
+export function isApprovedPublicAsset(url?: string | null) {
+  if (!url) return false;
+  const trimmed = url.trim();
+  if (!trimmed || trimmed.startsWith("data:")) return false;
+  if (trimmed.startsWith("/assets/visual-assets/") || trimmed.startsWith("/media_stills/")) return false;
+  if (trimmed.startsWith("/assets/")) return true;
+
+  try {
+    const parsed = new URL(trimmed);
+    if (!["http:", "https:"].includes(parsed.protocol)) return false;
+    const pathname = parsed.pathname.toLowerCase();
+    return !pathname.includes("/media_stills/") && !pathname.includes("/assets/visual-assets/");
+  } catch {
+    return false;
+  }
+}
 
 export function nextLastSaturday(from = new Date()) {
   const candidate = new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), 1));
@@ -76,7 +68,7 @@ export function findBralessEvent(events: Event[]) {
 
 export async function getPublicCatalogue() {
   const supabase = await getSupabaseServer();
-  if (!supabase) return { rooms: [] as Room[], menu: [] as MenuItem[], categories: [] as MenuCategory[], events: [localFeaturedEvent], settings: defaultSettings, media: [] as MediaAsset[] };
+  if (!supabase) return { rooms: [] as Room[], menu: [] as MenuItem[], categories: [] as MenuCategory[], events: [] as Event[], settings: defaultSettings, media: [] as MediaAsset[] };
   const [roomsResult, menuResult, categoriesResult, eventsResult, settingsResult, mediaResult] = await Promise.all([
     supabase.from("rooms").select("*").eq("is_active", true).order("created_at"),
     supabase.from("menu_items").select("*").eq("is_available", true).order("category").order("name"),
@@ -85,19 +77,26 @@ export async function getPublicCatalogue() {
     supabase.from("site_settings").select("*").eq("id", 1).maybeSingle(),
     supabase.from("media_assets").select("*").eq("is_published", true).order("display_order", { ascending: true }).order("created_at", { ascending: false }),
   ]);
+
+  const normalizedSettings = settingsResult.data
+    ? Object.fromEntries(
+        Object.entries(settingsResult.data).filter(([, value]) => value !== null && value !== "" && value !== undefined)
+      )
+    : {};
+
   return {
     rooms: (roomsResult.data || []) as Room[],
     menu: (menuResult.data || []) as MenuItem[],
     categories: (categoriesResult.data || []) as MenuCategory[],
     events: (eventsResult.data || []).map((event) => ({ ...event, event_date: resolveEventDate(event as Event) })) as Event[],
-    settings: { ...defaultSettings, ...(settingsResult.data || {}) } as SiteSettings,
+    settings: { ...defaultSettings, ...normalizedSettings } as SiteSettings,
     media: (mediaResult.data || []) as MediaAsset[],
   };
 }
 
 export async function getPublicEvent(slug: string): Promise<Event | null> {
   const supabase = await getSupabaseServer();
-  if (!supabase) return slug === localFeaturedEvent.slug ? localFeaturedEvent : null;
+  if (!supabase) return null;
   const { data } = await supabase.from("events").select("*").eq("slug", slug).eq("is_active", true).eq("is_published", true).maybeSingle();
   return data ? { ...(data as Event), event_date: resolveEventDate(data as Event) } : null;
 }
