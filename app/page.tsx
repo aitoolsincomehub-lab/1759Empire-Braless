@@ -8,51 +8,57 @@ import { findBralessEvent, getPublicCatalogue, isApprovedPublicAsset } from "@/l
 import type { MediaAsset } from "@/types";
 
 const FALLBACK_ROOMS = [
-  { id: "deluxe-room", name: "Deluxe Room", price: "", image: "/assets/rooms/room-01.webp", note: "A calm, comfortable place to land." },
-  { id: "executive-room", name: "Executive Room", price: "", image: "/assets/rooms/room-02.webp", note: "More room for longer stays and late nights." },
+  { id: "deluxe-room", name: "Deluxe Room", price: "", image: "/assets/rooms/room-1.webp", note: "A calm, comfortable place to land." },
+  { id: "executive-room", name: "Executive Room", price: "", image: "/assets/rooms/room-2.webp", note: "More room for longer stays and late nights." },
 ];
 
 const SLOT_FALLBACKS = {
-  food: ["/assets/food/food-01.webp", "/assets/food/food-02.webp", "/assets/food/food-03.webp"],
-  drinks: "/assets/drinks/drinks-01.webp",
-  club: ["/assets/club-klass/club-klass-01.webp", "/assets/club-klass/club-klass-02.webp", "/assets/club-klass/club-klass-03.webp"],
-  braless: "/assets/braless/braless-01.webp",
-  viewing: "/assets/viewing-centre/viewing-centre-01.webp",
-  gallery: ["/assets/gallery/gallery-01.webp", "/assets/gallery/gallery-02.webp", "/assets/gallery/gallery-03.webp"],
+  food: ["/assets/food/food-1.webp", "/assets/food/food-2.webp", "/assets/food/food-3.webp"],
+  drinks: "/assets/drinks/drinks-1.webp",
+  club: ["/assets/club-klass/club-klass-1.webp", "/assets/club-klass/club-klass-2.webp", "/assets/club-klass/club-klass-3.webp"],
+  braless: "/assets/braless/braless-1.webp",
+  viewing: "/assets/viewing-centre/viewing-centre-1.webp",
+  gallery: ["/assets/gallery/gallery-1.webp", "/assets/gallery/gallery-2.webp", "/assets/gallery/gallery-3.webp"],
+} as const;
+
+const OFFICIAL_SOCIAL_LINKS = {
+  instagram: "https://www.instagram.com/1759empire/",
+  tiktok: "https://www.tiktok.com/@1759empire",
+  email: "connect1759empire@gmail.com",
 } as const;
 
 const PRODUCTION_ASSETS = new Set([
   "/assets/hero/1759-exterior-current-hero.webp",
   "/assets/hero/1759-exterior-current-mobile.webp",
   "/assets/brand/1759-empire-logo-transparent.png",
-  "/assets/rooms/room-01.webp",
-  "/assets/rooms/room-02.webp",
-  "/assets/rooms/room-03.webp",
-  "/assets/food/food-01.webp",
-  "/assets/food/food-02.webp",
-  "/assets/food/food-03.webp",
-  "/assets/food/food-04.webp",
-  "/assets/drinks/drinks-01.webp",
-  "/assets/drinks/drinks-02.webp",
-  "/assets/drinks/drinks-03.webp",
-  "/assets/drinks/drinks-04.webp",
-  "/assets/drinks/drinks-05.webp",
-  "/assets/club-klass/club-klass-01.webp",
-  "/assets/club-klass/club-klass-02.webp",
-  "/assets/club-klass/club-klass-03.webp",
-  "/assets/club-klass/club-klass-04.webp",
-  "/assets/braless/braless-01.webp",
-  "/assets/braless/braless-02.webp",
-  "/assets/events/event-01.webp",
-  "/assets/events/event-02.webp",
-  "/assets/events/event-03.webp",
-  "/assets/viewing-centre/viewing-centre-01.webp",
-  "/assets/viewing-centre/viewing-centre-02.webp",
-  "/assets/gallery/gallery-01.webp",
-  "/assets/gallery/gallery-02.webp",
-  "/assets/gallery/gallery-03.webp",
-  "/assets/nightlife/nightlife-01.webp",
-  "/assets/nightlife/nightlife-02.webp",
+  "/assets/rooms/room-1.webp",
+  "/assets/rooms/room-2.webp",
+  "/assets/rooms/room-3.webp",
+  "/assets/food/food-1.webp",
+  "/assets/food/food-2.webp",
+  "/assets/food/food-3.webp",
+  "/assets/food/food-4.webp",
+  "/assets/drinks/drinks-1.webp",
+  "/assets/drinks/drinks-2.webp",
+  "/assets/drinks/drinks-3.webp",
+  "/assets/drinks/drinks-4.webp",
+  "/assets/drinks/drinks-5.webp",
+  "/assets/club-klass/club-klass-1.webp",
+  "/assets/club-klass/club-klass-2.webp",
+  "/assets/club-klass/club-klass-3.webp",
+  "/assets/club-klass/club-klass-4.webp",
+  "/assets/braless/braless-1.webp",
+  "/assets/braless/braless-2.webp",
+  "/assets/events/event-1.webp",
+  "/assets/events/event-2.webp",
+  "/assets/events/event-3.webp",
+  "/assets/viewing-centre/viewing-centre-1.webp",
+  "/assets/viewing-centre/viewing-centre-2.webp",
+  "/assets/gallery/gallery-1.webp",
+  "/assets/gallery/gallery-2.webp",
+  "/assets/gallery/gallery-3.webp",
+  "/assets/nightlife/nightlife-1.webp",
+  "/assets/nightlife/nightlife-2.webp",
 ]);
 
 function localAssetOrEmpty(path: string) {
@@ -107,13 +113,13 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
   const highlights = catalogue.media.filter((item) => item.is_published && ["event_highlight", "event_recap", "event_teaser", "short", "dj_clip", "dj_set"].includes(item.content_type || "") && (item.external_url || item.public_url)).slice(0, 4);
   const artists = catalogue.events.flatMap((event) => event.performer_socials || []).filter((artist) => Boolean(artist.instagram || artist.tiktok || artist.youtube || artist.mixcloud || artist.website));
 
-  const eventImage = mediaFor(catalogue.media, (item) => item.section === "events" && isApprovedPublicAsset(item.public_url), "/assets/events/event-01.webp");
+  const eventImage = mediaFor(catalogue.media, (item) => item.section === "events" && isApprovedPublicAsset(item.public_url), "/assets/events/event-1.webp");
 
   return <main>
     <section className="hero" style={{ backgroundImage: `linear-gradient(90deg,rgba(7,7,7,.88) 0%,rgba(7,7,7,.58) 48%,rgba(7,7,7,.18) 100%),url("${hero}")` }}>
       <nav className="nav" aria-label="Primary navigation">
         <Link href="/" className="logoWrap" aria-label="1759 Empire home"><img src="/assets/brand/1759-empire-logo-transparent.png" alt="1759 Empire" /></Link>
-        <div className="links"><a href="#stay">Stay</a><a href="#dine">Dine</a><a href="#club">Club Klass</a><a href="#events">Events</a><a href="#media">Media</a></div>
+        <div className="links"><a href="#stay">Stay</a><a href="#dine">Dine</a><a href="#club">Club Klass</a><a href="#events">Events</a><a href="#live">1759 Live</a></div>
         <TrackedLink className="button buttonOutline" href="/book" eventName="booking_cta_clicked">Check Availability</TrackedLink>
       </nav>
       <div className="heroContent">
@@ -147,14 +153,16 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
 
     {catalogue.settings.show_events_section && <section id="events" className="events"><div className="sectionHead"><div><p className="eyebrow">WHAT'S ON</p><h2>Events made<br /><em>for the night.</em></h2></div><Link className="textLink dark" href="/events">All events →</Link></div><div className="eventCard"><BrandedMedia className="eventMedia" src={eventImage} alt={featuredEvent?.title || "1759 Empire event"} fallback="Event artwork coming soon"><span>{featuredEvent?.title || "Club Klass"}</span></BrandedMedia><div className="eventInfo"><p className="eventLabel">1759 EMPIRE · EVENTS</p><h3>{featuredEvent?.title || "The next big night"}</h3><p>{featuredEvent?.description || "Good music, full tables and a reason to make the night count."}</p>{featuredEvent?.slug ? <Link className="textLink dark" href={`/events/${featuredEvent.slug}`}>Explore event →</Link> : <Link className="textLink dark" href="/events">Event enquiries →</Link>}</div></div></section>}
 
-    {(youtube.length > 0 || mixcloud.length > 0 || highlights.length > 0) && <section id="media" className="mediaHub"><div className="sectionHead"><div><p className="eyebrow">1759 MEDIA · WATCH · LISTEN</p><h2>More from the Empire.</h2></div><span className="mediaHubHint">YouTube · Mixcloud · Event highlights</span></div><div className="mediaHubGrid">{[...youtube, ...mixcloud, ...highlights].slice(0, 6).map((item) => <article className="mediaHubCard" key={item.id}><a href={item.external_url || item.public_url || "#"} target={item.external_url ? "_blank" : undefined} rel={item.external_url ? "noreferrer" : undefined}><div className="mediaHubImage">{isApprovedPublicAsset(mediaThumbnail(item)) ? <img src={mediaThumbnail(item)} alt={item.alt_text || item.title || "1759 Empire media"} loading="lazy" /> : <div className="mediaFallback"><span className="mediaMark">1759</span><strong>{item.title || "Media feature"}</strong><small>Content slot</small></div>}</div><div><span>{item.platform || "website"} · {item.content_type || "media"}</span><strong>{item.title || "1759 Empire"}</strong><p>{item.caption || item.social_caption || "Watch, listen and stay close to the Empire."}</p></div></a></article>)}</div></section>}
+    <section id="live" className="liveSection"><div className="sectionHead"><div><p className="eyebrow">1759 LIVE</p><h2>The sound, stories<br /><em>and energy of 1759.</em></h2><p>Our growing home for the nights, people and culture of the Empire.</p></div></div><div className="liveGrid"><article><BrandedMedia src={eventImage} alt="1759 Empire event" fallback="1759 TV" /><div><span>1759 TV</span><p>Watch the nights, events and people of 1759.</p></div></article><article><BrandedMedia src={clubImages[0]} alt="Club Klass atmosphere" fallback="1759 Music" /><div><span>1759 MUSIC</span><p>Music, DJs, mixes and the sound of the Empire.</p></div></article><article><BrandedMedia src={galleryImages[0]} alt="1759 Empire atmosphere" fallback="1759 Social" /><div><span>1759 SOCIAL</span><p>Follow what's happening at 1759.</p><div className="liveSocialLinks"><a href={OFFICIAL_SOCIAL_LINKS.instagram} target="_blank" rel="noreferrer">Instagram</a><a href={OFFICIAL_SOCIAL_LINKS.tiktok} target="_blank" rel="noreferrer">TikTok</a></div></div></article></div></section>
+
+    {(youtube.length > 0 || mixcloud.length > 0 || highlights.length > 0) && <section id="media" className="mediaHub"><div className="sectionHead"><div><p className="eyebrow">1759 LIVE · WATCH · LISTEN</p><h2>More from the Empire.</h2></div><span className="mediaHubHint">YouTube · Mixcloud · Event highlights</span></div><div className="mediaHubGrid">{[...youtube, ...mixcloud, ...highlights].slice(0, 6).map((item) => <article className="mediaHubCard" key={item.id}><a href={item.external_url || item.public_url || "#"} target={item.external_url ? "_blank" : undefined} rel={item.external_url ? "noreferrer" : undefined}><div className="mediaHubImage">{isApprovedPublicAsset(mediaThumbnail(item)) ? <img src={mediaThumbnail(item)} alt={item.alt_text || item.title || "1759 Empire media"} loading="lazy" /> : <div className="mediaFallback"><span className="mediaMark">1759</span><strong>{item.title || "Media feature"}</strong><small>Content slot</small></div>}</div><div><span>{item.platform || "website"} · {item.content_type || "media"}</span><strong>{item.title || "1759 Empire"}</strong><p>{item.caption || item.social_caption || "Watch, listen and stay close to the Empire."}</p></div></a></article>)}</div></section>}
 
     {artists.length > 0 && <section className="artistsSection"><div className="sectionHead"><div><p className="eyebrow">FOLLOW THE ARTISTS</p><h2>DJ and artist links.</h2></div></div><div className="artistGrid">{artists.map((artist, index) => <article className="artistCard" key={`${artist.name}-${index}`}><strong>{artist.name}</strong>{artist.instagram && <a href={artist.instagram}>Instagram</a>}{artist.tiktok && <a href={artist.tiktok}>TikTok</a>}{artist.youtube && <a href={artist.youtube}>YouTube</a>}{artist.mixcloud && <a href={artist.mixcloud}>Mixcloud</a>}{artist.website && <a href={artist.website}>Website</a>}</article>)}</div></section>}
 
     <section className="galleryIntro"><p className="eyebrow">THE ATMOSPHERE</p><h2>See the night.<br /><em>Then come experience it.</em></h2><div className="momentStrip">{galleryImages.map((src, index) => <BrandedMedia key={`${src || "gallery"}-${index}`} src={src} fallback={["Stay", "Dine", "Late nights"][index] || "1759 Empire atmosphere"} alt="1759 Empire atmosphere" />)}</div><p>Hotel calm, open-air energy and Club Klass after dark, all in one destination.</p></section>
 
-    <section id="contact" className="contact"><div><p className="eyebrow">FIND US</p><h2>{catalogue.settings.address}</h2><p>{catalogue.settings.contact_cta}</p><p>{catalogue.settings.phone || catalogue.settings.booking_contact}{catalogue.settings.email ? ` · ${catalogue.settings.email}` : ""}</p><div className="actions"><TrackedLink className="button" href="/book" eventName="booking_cta_clicked">Check room availability</TrackedLink>{catalogue.settings.whatsapp_number ? <TrackedWhatsAppLink className="textLink dark" context="contact" href={`https://wa.me/${catalogue.settings.whatsapp_number}?text=${encodeURIComponent("Hello 1759 Empire, I'd like to make an enquiry.")}`}>WhatsApp us</TrackedWhatsAppLink> : <Link className="textLink dark" href="/book">Contact 1759</Link>}</div></div><GeneralEnquiryForm whatsapp={catalogue.settings.whatsapp_number} /></section>
+    <section id="contact" className="contact"><div><p className="eyebrow">FIND US</p><h2>{catalogue.settings.address}</h2><p>{catalogue.settings.contact_cta}</p><p>{catalogue.settings.phone || catalogue.settings.booking_contact}{catalogue.settings.email ? ` · ${catalogue.settings.email}` : ` · ${OFFICIAL_SOCIAL_LINKS.email}`}</p><div className="actions"><TrackedLink className="button" href="/book" eventName="booking_cta_clicked">Check room availability</TrackedLink>{catalogue.settings.whatsapp_number ? <TrackedWhatsAppLink className="textLink dark" context="contact" href={`https://wa.me/${catalogue.settings.whatsapp_number}?text=${encodeURIComponent("Hello 1759 Empire, I'd like to make an enquiry.")}`}>WhatsApp us</TrackedWhatsAppLink> : <Link className="textLink dark" href="/book">Contact 1759</Link>}</div></div><GeneralEnquiryForm whatsapp={catalogue.settings.whatsapp_number} /></section>
 
-    <footer><img src="/assets/brand/1759-empire-logo-transparent.png" alt={catalogue.settings.business_name} /><span>{catalogue.settings.business_name} · Hotel · Lounge · Club · © 2026 1759 Empire</span><span>Stay · Dine · Party · Watch · Belong</span></footer>
+    <footer><img src="/assets/brand/1759-empire-logo-transparent.png" alt={catalogue.settings.business_name} /><span>{catalogue.settings.business_name} · Hotel · Lounge · Club · © 2026 1759 Empire</span><span>Stay · Dine · Party · Watch · Belong</span><span><a href={OFFICIAL_SOCIAL_LINKS.instagram} target="_blank" rel="noreferrer">Instagram</a> · <a href={OFFICIAL_SOCIAL_LINKS.tiktok} target="_blank" rel="noreferrer">TikTok</a></span></footer>
   </main>;
 }

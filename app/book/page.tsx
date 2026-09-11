@@ -196,7 +196,7 @@ export default function Book() {
 
             <div className="bookingActions">
               <button className="button wide premiumBookingButton" type="submit" disabled={state === "loading" || rooms.length === 0}>{state === "loading" ? "Checking availability..." : "Request booking"}</button>
-              <Link className="conciergeButton" href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "2349013230224"}?text=${encodeURIComponent("Hello 1759 Empire, I need concierge help with my stay.")}`}>Concierge</Link>
+              <Link className="conciergeButton" href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "2349013230224"}?text=${encodeURIComponent("Hello 1759 Empire, I need concierge help with my stay.")}`}><span>WhatsApp Concierge</span><small>Need help before you book? Chat with the 1759 team on WhatsApp.</small></Link>
             </div>
           </form>
 

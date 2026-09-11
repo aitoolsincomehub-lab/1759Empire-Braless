@@ -1,4 +1,6 @@
 import { getSupabaseServer } from "@/lib/supabase/server";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Event, MediaAsset, MenuCategory, MenuItem, Room, SiteSettings } from "@/types";
 
 export const defaultSettings: SiteSettings = {
@@ -66,17 +68,25 @@ export function findBralessEvent(events: Event[]) {
   }) || null;
 }
 
+async function readCatalogue(client: SupabaseClient) {
+  return Promise.all([
+    client.from("rooms").select("*").eq("is_active", true).order("created_at"),
+    client.from("menu_items").select("*").eq("is_available", true).order("category").order("name"),
+    client.from("menu_categories").select("*").eq("is_active", true).order("sort_order", { ascending: true }),
+    client.from("events").select("*").eq("is_active", true).eq("is_published", true).order("event_date"),
+    client.from("site_settings").select("*").eq("id", 1).maybeSingle(),
+    client.from("media_assets").select("*").eq("is_published", true).order("display_order", { ascending: true }).order("created_at", { ascending: false }),
+  ]);
+}
+
 export async function getPublicCatalogue() {
   const supabase = await getSupabaseServer();
   if (!supabase) return { rooms: [] as Room[], menu: [] as MenuItem[], categories: [] as MenuCategory[], events: [] as Event[], settings: defaultSettings, media: [] as MediaAsset[] };
-  const [roomsResult, menuResult, categoriesResult, eventsResult, settingsResult, mediaResult] = await Promise.all([
-    supabase.from("rooms").select("*").eq("is_active", true).order("created_at"),
-    supabase.from("menu_items").select("*").eq("is_available", true).order("category").order("name"),
-    supabase.from("menu_categories").select("*").eq("is_active", true).order("sort_order", { ascending: true }),
-    supabase.from("events").select("*").eq("is_active", true).eq("is_published", true).order("event_date"),
-    supabase.from("site_settings").select("*").eq("id", 1).maybeSingle(),
-    supabase.from("media_assets").select("*").eq("is_published", true).order("display_order", { ascending: true }).order("created_at", { ascending: false }),
-  ]);
+  let [roomsResult, menuResult, categoriesResult, eventsResult, settingsResult, mediaResult] = await readCatalogue(supabase);
+  if ([roomsResult, menuResult, categoriesResult, eventsResult, settingsResult, mediaResult].some((result) => result.error)) {
+    const admin = getSupabaseAdmin();
+    if (admin) [roomsResult, menuResult, categoriesResult, eventsResult, settingsResult, mediaResult] = await readCatalogue(admin);
+  }
 
   const normalizedSettings = settingsResult.data
     ? Object.fromEntries(
