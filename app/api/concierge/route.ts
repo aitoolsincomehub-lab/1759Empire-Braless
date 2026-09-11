@@ -96,6 +96,11 @@ function fallbackReply(message: string, catalogue: Awaited<ReturnType<typeof get
     return { message: whatsapp ? `You can reach 1759 Empire on WhatsApp at ${whatsapp}.` : "Contact details are not currently available in the public settings.", actions: whatsapp ? [{ type: "WHATSAPP", label: "Chat on WhatsApp", href: `https://wa.me/${whatsapp}` }, { type: "GENERAL_ENQUIRY", label: "Send an enquiry", href: "/#contact" }] : [{ type: "GENERAL_ENQUIRY", label: "Send an enquiry", href: "/#contact" }] };
   }
 
+  if (/what can i do|things to do|activities|how can i spend|experience at 1759/.test(lower)) {
+    const options = ["stay in a room", "enjoy food and drinks", "visit Club Klass", "watch the game at the Viewing Centre", "check current events"].join(", ");
+    return { message: `At 1759 Empire, you can ${options}. I can also help you check rooms, view events or make an enquiry.`, actions: actionsFor(message, whatsapp, event) };
+  }
+
   if (/media|youtube|mixcloud|social|content/.test(lower)) {
     return { message: "The 1759 media section highlights events, nightlife and social content. See the media section or event pages for published content.", actions: [{ type: "GENERAL_ENQUIRY", label: "See events", href: "/events" }] };
   }

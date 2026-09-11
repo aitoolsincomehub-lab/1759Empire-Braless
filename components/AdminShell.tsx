@@ -53,7 +53,7 @@ export default function AdminShell({ children }: { children: ReactNode }) {
       <div className="adminDeskFooter">
         <Link href="/">View Website</Link>
         <Link href="/admin/login">Staff / Account</Link>
-        <a href="/admin/login" onClick={logout}>Logout</a>
+        <a href="/admin/login" onClick={logout}>Sign out</a>
         {logoutError && <span role="alert">{logoutError}</span>}
       </div>
     </aside>

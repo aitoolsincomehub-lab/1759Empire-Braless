@@ -63,6 +63,7 @@ export async function POST(request: Request) {
   const durationSeconds = Number(form.get("durationSeconds") || 0);
   const status = (form.get("status") || "draft").toString();
   const replaceId = (form.get("replaceId") || "").toString();
+  const replaceSlot = form.get("replaceSlot") === "true";
   if (!(file instanceof File) || typeof section !== "string" || !(section in limits)) return NextResponse.json({ ok: false, error: "Choose a valid file and section." }, { status: 400 });
   if (!platforms.includes(platform as typeof platforms[number])) return NextResponse.json({ ok: false, error: "Choose a supported platform." }, { status: 400 });
   if (!contentTypes.includes(contentType as typeof contentTypes[number])) return NextResponse.json({ ok: false, error: "Choose a supported content type." }, { status: 400 });
@@ -71,12 +72,15 @@ export async function POST(request: Request) {
   const maxSize = videoTypes.includes(file.type) ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
   if (!allowed.includes(file.type) || file.size > maxSize) return NextResponse.json({ ok: false, error: videoTypes.includes(file.type) ? "Use MP4/WebM/MOV video under 100 MB." : "Use JPG, PNG, or WebP images under 10 MB." }, { status: 400 });
   const { count } = await supabase.from("media_assets").select("id", { count: "exact", head: true }).eq("section", section).eq("is_published", true);
-  if (!replaceId && (count || 0) >= limits[section]) return NextResponse.json({ ok: false, error: `The ${section} media limit is ${limits[section]}. Delete or replace an existing asset first.` }, { status: 409 });
+  if (!replaceId && !replaceSlot && (count || 0) >= limits[section]) return NextResponse.json({ ok: false, error: `The ${section} media limit is ${limits[section]}. Delete or replace an existing asset first.` }, { status: 409 });
   let existing: { id: string; storage_path: string } | null = null;
   if (replaceId) {
     const { data } = await supabase.from("media_assets").select("id, storage_path").eq("id", replaceId).maybeSingle();
     if (!data) return NextResponse.json({ ok: false, error: "The media item to replace could not be found." }, { status: 404 });
     existing = data;
+  } else if (replaceSlot) {
+    const { data: slotRows } = await supabase.from("media_assets").select("id, storage_path").eq("section", section).eq("display_order", Number.isFinite(displayOrder) ? displayOrder : 0).eq("platform", "website").eq("is_published", true).order("created_at", { ascending: false }).limit(1);
+    existing = slotRows?.[0] || null;
   }
   const safeName = file.name.toLowerCase().replace(/[^a-z0-9.-]+/g, "-");
   const imageUpload = imageTypes.includes(file.type);

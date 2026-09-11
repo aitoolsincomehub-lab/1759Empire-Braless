@@ -75,7 +75,7 @@ async function readCatalogue(client: SupabaseClient) {
     client.from("menu_categories").select("*").eq("is_active", true).order("sort_order", { ascending: true }),
     client.from("events").select("*").eq("is_active", true).eq("is_published", true).order("event_date"),
     client.from("site_settings").select("*").eq("id", 1).maybeSingle(),
-    client.from("media_assets").select("*").eq("is_published", true).order("display_order", { ascending: true }).order("created_at", { ascending: false }),
+    client.from("media_assets").select("*").eq("is_published", true).order("display_order", { ascending: true }).order("created_at", { ascending: false }).order("id", { ascending: false }),
   ]);
 }
 
