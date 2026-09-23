@@ -28,6 +28,7 @@ export default function AdminCatalogueEditor({
   const [draft, setDraft] = useState<Record<string, unknown>>({});
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [menuFilter, setMenuFilter] = useState<"all" | "food" | "drinks">("all");
 
   const mediaOptions = useMemo(
     () => media.filter((item) => resource === "events" ? item.section === "events" : resource === "rooms" ? item.section === "rooms" : item.section === "food"),
@@ -46,15 +47,20 @@ export default function AdminCatalogueEditor({
       is_active: Boolean(resource === "rooms" ? roomItem.is_active : eventItem.is_active),
       is_published: Boolean(eventItem.is_published),
       is_available: Boolean(menuItem.is_available),
-      featured: Boolean(menuItem.featured),
       images: resource === "rooms" ? (Array.isArray(roomItem.images) ? roomItem.images : []) : resource === "menu" && menuItem.image_url ? [menuItem.image_url] : eventItem.image_url ? [eventItem.image_url] : [],
       image_url: resource === "events" ? (eventItem.image_url ?? "") : resource === "menu" ? (menuItem.image_url ?? "") : "",
       name: resource !== "events" ? (roomItem.name || menuItem.name || "") : "",
       title: resource === "events" ? (eventItem.title || "") : "",
+      slug: resource === "events" ? (eventItem.slug || "") : "",
       description: item.description || "",
       category: menuItem.category || "",
       total_units: Number(roomItem.total_units ?? 1),
       event_date: eventItem.event_date || new Date().toISOString().slice(0, 10),
+      event_time: eventItem.event_time || "",
+      end_time: eventItem.end_time || "",
+      location: eventItem.location || "",
+      entry_price: Number(eventItem.entry_price ?? 0),
+      is_recurring: Boolean(eventItem.is_recurring),
     };
     setIsCreating(false);
     setEditingId(String(item.id));
@@ -74,8 +80,12 @@ export default function AdminCatalogueEditor({
       is_active: true,
       is_published: false,
       is_available: true,
-      featured: false,
       event_date: new Date().toISOString().slice(0, 10),
+      event_time: "",
+      end_time: "",
+      location: "",
+      entry_price: 0,
+      is_recurring: false,
       images: [],
       image_url: "",
     };
@@ -100,10 +110,16 @@ export default function AdminCatalogueEditor({
     }
     if (resource === "events") {
       payload.title = draft.title ?? "";
+      payload.slug = draft.slug || null;
       payload.event_date = draft.event_date ?? new Date().toISOString().slice(0, 10);
+      payload.event_time = draft.event_time || null;
+      payload.end_time = draft.end_time || null;
+      payload.location = draft.location || null;
+      payload.entry_price = Number(draft.entry_price ?? 0);
       payload.description = draft.description ?? "";
       payload.is_published = Boolean(draft.is_published);
       payload.is_active = Boolean(draft.is_active);
+      payload.is_recurring = Boolean(draft.is_recurring);
       payload.image_url = draft.image_url ?? null;
     }
     if (resource === "menu") {
@@ -112,7 +128,6 @@ export default function AdminCatalogueEditor({
       payload.description = draft.description ?? "";
       payload.price = Number(draft.price ?? 0);
       payload.is_available = Boolean(draft.is_available);
-      payload.featured = Boolean(draft.featured);
       payload.image_url = draft.image_url ?? null;
     }
 
@@ -176,6 +191,10 @@ export default function AdminCatalogueEditor({
   }
 
   const rowLabel = resource === "rooms" ? "Rooms" : resource === "events" ? "Events" : "Menu";
+  const filteredItems = resource !== "menu" || menuFilter === "all" ? items : items.filter((item) => {
+    const isDrink = /drink|beverage|cocktail|mocktail|wine|beer|spirit|bar|juice/i.test((item as MenuItem).category);
+    return menuFilter === "drinks" ? isDrink : !isDrink;
+  });
 
   return (
     <section className="adminFormShell">
@@ -189,8 +208,10 @@ export default function AdminCatalogueEditor({
 
       {message && <div className="adminFormMessage">{message}</div>}
 
+      {resource === "menu" && <div className="adminMenuFilters" role="tablist" aria-label="Menu type"><button type="button" className={menuFilter === "all" ? "active" : ""} onClick={() => setMenuFilter("all")}>All</button><button type="button" className={menuFilter === "food" ? "active" : ""} onClick={() => setMenuFilter("food")}>Food</button><button type="button" className={menuFilter === "drinks" ? "active" : ""} onClick={() => setMenuFilter("drinks")}>Drinks</button></div>}
+
       <div className="adminCardGrid">
-        {(items || []).map((item) => {
+        {(filteredItems || []).map((item) => {
           const id = String(item.id);
           const isEditing = editingId === id;
           const candidateImage = resource === "rooms"
@@ -214,7 +235,7 @@ export default function AdminCatalogueEditor({
                 </div>
                 <div className="adminRoomDetails">
                   <span>{resource === "rooms" ? `₦${Number((item as Room).price_per_night || 0).toLocaleString()}` : resource === "events" ? (item as Event).event_date : `₦${Number((item as MenuItem).price || 0).toLocaleString()}`}</span>
-                  <span>{resource === "menu" && (item as MenuItem).featured ? "Featured" : resource === "rooms" ? `${(item as Room).total_units || 1} units` : (item as Event).is_active ? "Live" : "Hidden"}</span>
+                  <span>{resource === "rooms" ? `${(item as Room).total_units || 1} units` : resource === "events" ? ((item as Event).is_active ? "Live" : "Hidden") : "Menu item"}</span>
                 </div>
               </div>
               <div className="adminMediaActions" style={{ marginTop: 0, paddingTop: 12 }}>
@@ -258,6 +279,10 @@ export default function AdminCatalogueEditor({
                         Title
                         <input value={String(draft.title ?? "")} onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))} />
                       </label>
+                      <label className="adminFieldFull">
+                        Slug
+                        <input value={String(draft.slug ?? "")} onChange={(event) => setDraft((current) => ({ ...current, slug: event.target.value }))} />
+                      </label>
                       <label>
                         Event date
                         <input type="date" value={String(draft.event_date ?? "")} onChange={(event) => setDraft((current) => ({ ...current, event_date: event.target.value }))} />
@@ -267,8 +292,28 @@ export default function AdminCatalogueEditor({
                         <input type="checkbox" checked={Boolean(draft.is_published)} onChange={(event) => setDraft((current) => ({ ...current, is_published: event.target.checked }))} />
                       </label>
                       <label>
+                        Event time
+                        <input type="time" value={String(draft.event_time ?? "")} onChange={(event) => setDraft((current) => ({ ...current, event_time: event.target.value }))} />
+                      </label>
+                      <label>
+                        End time
+                        <input type="time" value={String(draft.end_time ?? "")} onChange={(event) => setDraft((current) => ({ ...current, end_time: event.target.value }))} />
+                      </label>
+                      <label>
+                        Entry price
+                        <input type="number" value={Number(draft.entry_price ?? 0)} onChange={(event) => setDraft((current) => ({ ...current, entry_price: Number(event.target.value) }))} />
+                      </label>
+                      <label>
+                        Recurring
+                        <input type="checkbox" checked={Boolean(draft.is_recurring)} onChange={(event) => setDraft((current) => ({ ...current, is_recurring: event.target.checked }))} />
+                      </label>
+                      <label>
                         Active
                         <input type="checkbox" checked={Boolean(draft.is_active)} onChange={(event) => setDraft((current) => ({ ...current, is_active: event.target.checked }))} />
+                      </label>
+                      <label className="adminFieldFull">
+                        Location
+                        <input value={String(draft.location ?? "")} onChange={(event) => setDraft((current) => ({ ...current, location: event.target.value }))} />
                       </label>
                       <label className="adminFieldFull">
                         Description
@@ -297,10 +342,6 @@ export default function AdminCatalogueEditor({
                       <label>
                         Available
                         <input type="checkbox" checked={Boolean(draft.is_available)} onChange={(event) => setDraft((current) => ({ ...current, is_available: event.target.checked }))} />
-                      </label>
-                      <label>
-                        Featured
-                        <input type="checkbox" checked={Boolean(draft.featured)} onChange={(event) => setDraft((current) => ({ ...current, featured: event.target.checked }))} />
                       </label>
                       <label className="adminFieldFull">
                         Description

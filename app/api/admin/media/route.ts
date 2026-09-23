@@ -69,8 +69,10 @@ export async function POST(request: Request) {
   if (!contentTypes.includes(contentType as typeof contentTypes[number])) return NextResponse.json({ ok: false, error: "Choose a supported content type." }, { status: 400 });
   if (!["draft", "ready", "published", "archived"].includes(status)) return NextResponse.json({ ok: false, error: "Choose a supported publish status." }, { status: 400 });
   const allowed = [...imageTypes, ...videoTypes];
-  const maxSize = videoTypes.includes(file.type) ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
-  if (!allowed.includes(file.type) || file.size > maxSize) return NextResponse.json({ ok: false, error: videoTypes.includes(file.type) ? "Use MP4/WebM/MOV video under 100 MB." : "Use JPG, PNG, or WebP images under 10 MB." }, { status: 400 });
+  const isVideo = file.type.startsWith("video/");
+  const maxSize = isVideo ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
+  if (!allowed.includes(file.type)) return NextResponse.json({ ok: false, error: isVideo ? "This video format isn't supported. Please choose another video." : "This image format isn't supported. Please choose a JPG, PNG or WebP image." }, { status: 400 });
+  if (file.size > maxSize) return NextResponse.json({ ok: false, error: isVideo ? "This video is too large. Please choose a shorter video." : "This image is too large. Please choose an image under 10 MB." }, { status: 400 });
   const { count } = await supabase.from("media_assets").select("id", { count: "exact", head: true }).eq("section", section).eq("is_published", true);
   if (!replaceId && !replaceSlot && (count || 0) >= limits[section]) return NextResponse.json({ ok: false, error: `The ${section} media limit is ${limits[section]}. Delete or replace an existing asset first.` }, { status: 409 });
   let existing: { id: string; storage_path: string } | null = null;
@@ -116,7 +118,7 @@ export async function POST(request: Request) {
     status,
     storage_path: runtimePath,
     public_url: publicUrl.publicUrl,
-    media_type: videoTypes.includes(file.type) ? "video" : "image",
+    media_type: isVideo ? "video" : "image",
     alt_text: typeof altText === "string" ? altText.slice(0, 160) : "",
     caption: typeof caption === "string" ? caption.slice(0, 300) : "",
     is_featured: isFeatured === "true",
@@ -135,6 +137,10 @@ export async function POST(request: Request) {
   if (existing) {
     const oldPaths = [existing.storage_path, originalPathFor(existing.storage_path)];
     await supabase.storage.from("hotel-images").remove(oldPaths.filter((path) => path !== runtimePath));
+  }
+  if (section === "hero" && (replaceId || replaceSlot)) {
+    const { error: settingsError } = await supabase.from("site_settings").upsert({ id: 1, hero_media_url: data.public_url });
+    if (settingsError) return NextResponse.json({ ok: false, error: "The Homepage hero setting could not be updated." }, { status: 500 });
   }
   return NextResponse.json({ ok: true, data, optimized: imageUpload, replaced: Boolean(existing) }, { status: 201 });
 }

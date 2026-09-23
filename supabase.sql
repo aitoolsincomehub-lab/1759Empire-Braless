@@ -25,7 +25,7 @@ create table if not exists bookings (
   guest_name text not null,
   guest_phone text not null,
   guest_email text,
-  guests integer not null default 1 check (guests > 0),
+  guests integer not null default 1 check (guests between 1 and 2),
   check_in date not null,
   check_out date not null,
   status text not null default 'pending' check (status in ('pending','confirmed','cancelled','checked_in','checked_out')),
@@ -335,15 +335,31 @@ $$;
 create or replace function public.admin_update_booking_status(p_booking_id uuid, p_status text, p_payment_status text default null, p_notes text default null)
 returns bookings language plpgsql security invoker set search_path = public
 as $$
-declare updated_booking bookings%rowtype;
+declare
+  current_booking bookings%rowtype;
+  selected_room rooms%rowtype;
+  active_count integer;
 begin
   if not public.is_admin() then raise exception 'NOT_AUTHORIZED'; end if;
   if p_status not in ('pending','confirmed','cancelled','checked_in','checked_out') then raise exception 'INVALID_STATUS'; end if;
   if p_payment_status is not null and p_payment_status not in ('unpaid','partial','paid','refunded') then raise exception 'INVALID_PAYMENT_STATUS'; end if;
-  update bookings set status = p_status, payment_status = coalesce(p_payment_status, payment_status), notes = coalesce(left(p_notes, 500), notes)
-    where id = p_booking_id returning * into updated_booking;
+  select * into current_booking from bookings where id = p_booking_id;
   if not found then raise exception 'BOOKING_NOT_FOUND'; end if;
-  return updated_booking;
+  if p_status in ('pending','confirmed','checked_in') then
+    perform pg_advisory_xact_lock(hashtextextended(current_booking.room_id::text, 1759));
+    select * into selected_room from rooms where id = current_booking.room_id;
+    if not found then raise exception 'ROOM_NOT_FOUND'; end if;
+    if not selected_room.is_active then raise exception 'ROOM_INACTIVE'; end if;
+    if current_booking.check_out <= current_booking.check_in then raise exception 'INVALID_DATES'; end if;
+    select count(*) into active_count from bookings
+      where room_id = current_booking.room_id and id <> current_booking.id
+        and status in ('pending','confirmed','checked_in')
+        and check_in < current_booking.check_out and check_out > current_booking.check_in;
+    if active_count >= selected_room.total_units then raise exception 'ROOM_UNAVAILABLE'; end if;
+  end if;
+  update bookings set status = p_status, payment_status = coalesce(p_payment_status, payment_status), notes = coalesce(left(p_notes, 500), notes)
+    where id = p_booking_id returning * into current_booking;
+  return current_booking;
 end; $$;
 
 create or replace function public.create_booking_request_with_attribution(
@@ -371,6 +387,15 @@ begin
     returning * into created_booking;
   return created_booking;
 end; $$;
+
+revoke all on function public.get_available_rooms(date, date) from public;
+grant execute on function public.get_available_rooms(date, date) to anon, authenticated;
+revoke all on function public.create_booking_request(uuid, text, text, text, integer, date, date, text) from public;
+grant execute on function public.create_booking_request(uuid, text, text, text, integer, date, date, text) to anon, authenticated;
+revoke all on function public.create_booking_request_with_attribution(uuid, text, text, text, integer, date, date, text, text, text, uuid, text, text, text, text) from public;
+grant execute on function public.create_booking_request_with_attribution(uuid, text, text, text, integer, date, date, text, text, text, uuid, text, text, text, text) to anon, authenticated;
+revoke all on function public.admin_update_booking_status(uuid, text, text, text) from public;
+grant execute on function public.admin_update_booking_status(uuid, text, text, text) to authenticated;
 
 create or replace function public.create_event_enquiry(
   p_event_id uuid, p_guest_name text, p_phone text, p_email text,
@@ -426,3 +451,82 @@ grant execute on function public.create_general_enquiry(text, text, text, text, 
 
 -- For production: add authenticated admin policies before enabling admin UI.
 -- Booking creation should use a server action / API route with validation.
+
+-- Existing private inventory_items contract used by the admin inventory module.
+-- This documents the live table only; it intentionally does not create or alter it.
+-- Columns used: id, name, category, quantity, unit, status, reorder_level,
+-- notes, is_active.
+
+-- 1759 Empire room inventory: match existing records by slug or name, preserve IDs,
+-- create missing rooms, and deactivate non-source rooms without deleting history.
+do $$
+declare
+  room_spec record;
+  existing_id uuid;
+  desired_ids uuid[] := array[]::uuid[];
+begin
+  for room_spec in
+    select * from jsonb_to_recordset($rooms$
+      [
+        {"name":"Bixbite","slug":"bixbite","price":18500},
+        {"name":"Musgravite","slug":"musgravite","price":18500},
+        {"name":"Onyx","slug":"onyx","price":25500},
+        {"name":"Opal","slug":"opal","price":20500},
+        {"name":"Sapphire","slug":"sapphire","price":20500},
+        {"name":"Ruby","slug":"ruby","price":25500},
+        {"name":"Agate","slug":"agate","price":20500},
+        {"name":"Benitoite","slug":"benitoite","price":25500},
+        {"name":"Coral","slug":"coral","price":20500},
+        {"name":"Pearl","slug":"pearl","price":20500},
+        {"name":"Oriental","slug":"oriental","price":30500},
+        {"name":"Diamond","slug":"diamond","price":35500},
+        {"name":"Emerald","slug":"emerald","price":35500},
+        {"name":"Topaz","slug":"topaz","price":30500},
+        {"name":"Beryl","slug":"beryl","price":35500},
+        {"name":"Jasper","slug":"jasper","price":30500}
+      ]
+    $rooms$::jsonb) as rooms(name text, slug text, price numeric)
+  loop
+    select id into existing_id
+    from rooms
+    where lower(slug) = lower(room_spec.slug) or lower(name) = lower(room_spec.name)
+    order by case when lower(slug) = lower(room_spec.slug) then 0 else 1 end, created_at, id
+    limit 1;
+
+    if existing_id is null then
+      insert into rooms(name, slug, description, price_per_night, is_active)
+      values (
+        room_spec.name,
+        room_spec.slug,
+        E'Check-in: 12:00 PM\nCheck-out: 12:00 PM\n\nNO SMOKING\nNOT MORE THAN TWO PERSONS IN A ROOM\nNO VISITORS ARE ALLOWED ONCE IT''S 10:30PM\nFOODS AND DRINKS GOTTEN OUTSIDE ARE NOT ALLOWED IN THE ROOMS\n\nThanks for your understanding.',
+        room_spec.price,
+        true
+      )
+      returning id into existing_id;
+    else
+      update rooms
+      set name = room_spec.name,
+          slug = room_spec.slug,
+          description = E'Check-in: 12:00 PM\nCheck-out: 12:00 PM\n\nNO SMOKING\nNOT MORE THAN TWO PERSONS IN A ROOM\nNO VISITORS ARE ALLOWED ONCE IT''S 10:30PM\nFOODS AND DRINKS GOTTEN OUTSIDE ARE NOT ALLOWED IN THE ROOMS\n\nThanks for your understanding.',
+          price_per_night = room_spec.price,
+          is_active = true
+      where id = existing_id;
+    end if;
+
+    desired_ids := array_append(desired_ids, existing_id);
+    existing_id := null;
+  end loop;
+
+  update rooms set is_active = false where not (id = any(desired_ids));
+end $$;
+
+alter table bookings drop constraint if exists bookings_guests_check;
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.bookings'::regclass and conname = 'bookings_guests_check'
+  ) then
+    alter table bookings add constraint bookings_guests_check check (guests between 1 and 2);
+  end if;
+end $$;

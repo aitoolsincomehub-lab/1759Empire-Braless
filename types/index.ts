@@ -1,8 +1,37 @@
-export type BookingStatus = "pending" | "confirmed" | "cancelled" | "checked_in" | "checked_out";
-export type PaymentStatus = "unpaid" | "partial" | "paid" | "refunded";
-export type EnquiryStatus = "new" | "contacted" | "in_progress" | "resolved" | "cancelled";
-export type EventStatus = "draft" | "published" | "live" | "completed" | "cancelled";
-export type SourceType = "website" | "event" | "whatsapp" | "social" | "referral" | "direct";
+export type BookingStatus =
+  | "pending"
+  | "confirmed"
+  | "cancelled"
+  | "checked_in"
+  | "checked_out";
+
+export type PaymentStatus =
+  | "unpaid"
+  | "partial"
+  | "paid"
+  | "refunded";
+
+export type EnquiryStatus =
+  | "new"
+  | "contacted"
+  | "in_progress"
+  | "resolved"
+  | "cancelled";
+
+export type EventStatus =
+  | "draft"
+  | "published"
+  | "live"
+  | "completed"
+  | "cancelled";
+
+export type SourceType =
+  | "website"
+  | "event"
+  | "whatsapp"
+  | "social"
+  | "referral"
+  | "direct";
 
 export interface Attribution {
   source: string;
@@ -49,27 +78,14 @@ export interface Booking {
   created_at: string;
 }
 
-export interface MenuCategory {
-  id: string;
-  name: string;
-  description: string;
-  sort_order: number;
-  is_active: boolean;
-  created_at: string;
-}
-
 export interface MenuItem {
   id: string;
   category: string;
-  category_id?: string | null;
   name: string;
   description: string;
   price: number;
-  currency?: string;
   image_url: string | null;
   is_available: boolean;
-  featured?: boolean;
-  sort_order?: number;
   created_at: string;
 }
 
@@ -155,10 +171,58 @@ export interface GeneralEnquiry {
   created_at: string;
 }
 
-export type MediaAssetSection = "hero" | "rooms" | "club" | "events" | "food" | "gallery" | "venue" | "braless" | "media" | "tv" | "dj" | "conversation" | "fm";
-export type MediaPlatform = "website" | "youtube" | "mixcloud" | "instagram" | "tiktok" | "short_form";
-export type MediaContentType = "website_media" | "event_highlight" | "event_teaser" | "dj_clip" | "interview_clip" | "guest_reaction" | "food_clip" | "nightlife_clip" | "behind_the_scenes" | "announcement" | "countdown" | "promotional_clip" | "event_recap" | "dj_set" | "podcast" | "short" | "event" | "braless" | "dj_mix" | "tv" | "conversation" | "fm";
-export type MediaCampaignStatus = "draft" | "ready" | "published" | "archived";
+export type MediaAssetSection =
+  | "hero"
+  | "rooms"
+  | "club"
+  | "events"
+  | "food"
+  | "gallery"
+  | "venue"
+  | "braless"
+  | "media"
+  | "tv"
+  | "dj"
+  | "conversation"
+  | "fm";
+
+export type MediaPlatform =
+  | "website"
+  | "youtube"
+  | "mixcloud"
+  | "instagram"
+  | "tiktok"
+  | "short_form";
+
+export type MediaContentType =
+  | "website_media"
+  | "event_highlight"
+  | "event_teaser"
+  | "dj_clip"
+  | "interview_clip"
+  | "guest_reaction"
+  | "food_clip"
+  | "nightlife_clip"
+  | "behind_the_scenes"
+  | "announcement"
+  | "countdown"
+  | "promotional_clip"
+  | "event_recap"
+  | "dj_set"
+  | "podcast"
+  | "short"
+  | "event"
+  | "braless"
+  | "dj_mix"
+  | "tv"
+  | "conversation"
+  | "fm";
+
+export type MediaCampaignStatus =
+  | "draft"
+  | "ready"
+  | "published"
+  | "archived";
 
 export interface MediaAsset {
   id: string;
@@ -189,6 +253,34 @@ export interface MediaAsset {
   display_order: number;
   file_size: number;
   created_at: string;
+}
+
+export type MediaPostPlacement = "featured" | "weekly";
+
+export interface MediaPost {
+  id: string;
+  title: string;
+  tagline: string;
+  event_name: string;
+  event_date: string;
+  start_time: string | null;
+  end_time: string | null;
+  venue: string;
+  location: string;
+  placement: MediaPostPlacement;
+  flyer_media_id: string | null;
+  foreground_video_media_id: string | null;
+  background_video_media_id: string | null;
+  description: string;
+  cta_label: string;
+  cta_url: string;
+  published: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+  flyer?: MediaAsset | null;
+  foreground_video?: MediaAsset | null;
+  background_video?: MediaAsset | null;
 }
 
 export interface SiteSettings {

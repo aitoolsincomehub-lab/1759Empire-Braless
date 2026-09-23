@@ -1,0 +1,2309 @@
+/* ============================================================
+   BRALESS 1759 EMPIRE
+   FINAL CINEMATIC CAMPAIGN PAGE
+   ============================================================ */
+
+.page {
+  --black: #030303;
+  --black-soft: #080808;
+  --panel: #0d0d0f;
+  --panel-soft: #111114;
+
+  --red: #a80f18;
+  --red-bright: #e0202d;
+
+  --gold: #d7b56d;
+  --gold-bright: #f0ca78;
+  --gold-soft: #ead8ae;
+
+  --cream: #f5efe4;
+  --muted: #a8a39d;
+
+  --line: rgba(245, 239, 228, 0.13);
+
+  --content: 1440px;
+
+  position: relative;
+  min-height: 100vh;
+  overflow-x: hidden;
+
+  background: var(--black);
+  color: var(--cream);
+
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
+}
+
+.page *,
+.page *::before,
+.page *::after {
+  box-sizing: border-box;
+}
+
+.page a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.page img,
+.page video {
+  max-width: 100%;
+}
+
+.page :focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 4px;
+}
+
+
+/* ============================================================
+   SHARED
+   ============================================================ */
+
+.sectionInner {
+  position: relative;
+  z-index: 5;
+
+  width: min(
+    var(--content),
+    calc(100% - 72px)
+  );
+
+  margin: 0 auto;
+}
+
+.eyebrow {
+  margin: 0 0 18px;
+
+  color: var(--gold);
+
+  font:
+    800 10px/1
+    Arial,
+    sans-serif;
+
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+}
+
+.primaryCta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 50px;
+  padding: 0 24px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #ed2632,
+      #c9131d
+    );
+
+  color: #fff !important;
+
+  font:
+    800 10px/1
+    Arial,
+    sans-serif;
+
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+
+  box-shadow:
+    0 14px 38px
+      rgba(224, 32, 45, 0.22);
+
+  transition:
+    transform 180ms ease,
+    filter 180ms ease;
+}
+
+.primaryCta:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+
+.header {
+  position: absolute;
+  inset: 0 0 auto;
+
+  z-index: 50;
+
+  padding:
+    18px
+    clamp(20px, 4vw, 60px);
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.92),
+      rgba(0, 0, 0, 0)
+    );
+}
+
+.headerInner {
+  width: min(
+    var(--content),
+    100%
+  );
+
+  margin: 0 auto;
+
+  display: grid;
+
+  grid-template-columns:
+    minmax(150px, 1fr)
+    auto
+    minmax(150px, 1fr);
+
+  align-items: center;
+
+  gap: 30px;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+
+  justify-self: start;
+
+  width: 112px;
+}
+
+.brand img {
+  display: block;
+
+  width: 100%;
+  height: auto;
+
+  object-fit: contain;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap:
+    clamp(16px, 2.4vw, 34px);
+
+  font:
+    800 9px/1
+    Arial,
+    sans-serif;
+
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.nav a {
+  position: relative;
+
+  color:
+    rgba(
+      245,
+      239,
+      228,
+      0.68
+    );
+
+  transition:
+    color 180ms ease,
+    opacity 180ms ease;
+}
+
+.nav a:hover {
+  color: #fff;
+}
+
+.nav a::after {
+  content: "";
+
+  position: absolute;
+
+  left: 0;
+  right: 0;
+  bottom: -8px;
+
+  height: 1px;
+
+  background: var(--gold);
+
+  transform:
+    scaleX(0);
+
+  transform-origin: center;
+
+  transition:
+    transform 180ms ease;
+}
+
+.nav a:hover::after,
+.navActive::after {
+  transform: scaleX(1) !important;
+}
+
+.navActive {
+  color: var(--cream) !important;
+}
+
+.headerCta {
+  justify-self: end;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 40px;
+  padding: 0 17px;
+
+  background: var(--gold);
+
+  color: #090705 !important;
+
+  font:
+    800 8px/1
+    Arial,
+    sans-serif;
+
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+
+  transition:
+    transform 180ms ease,
+    filter 180ms ease;
+}
+
+.headerCta:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+
+
+/* ============================================================
+   HERO
+   ============================================================ */
+
+.hero {
+  position: relative;
+  isolation: isolate;
+
+  min-height: 100svh;
+
+  overflow: hidden;
+
+  padding:
+    120px
+    clamp(20px, 4vw, 60px)
+    70px;
+
+  background:
+    radial-gradient(
+      ellipse at 72% 42%,
+      rgba(168, 15, 24, 0.23),
+      transparent 34%
+    ),
+    radial-gradient(
+      ellipse at 90% 60%,
+      rgba(215, 181, 109, 0.09),
+      transparent 28%
+    ),
+    var(--black);
+}
+
+.heroAtmosphere {
+  position: absolute;
+  inset: 0;
+
+  z-index: -4;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(3, 3, 3, 0.94) 0%,
+      rgba(3, 3, 3, 0.62) 42%,
+      rgba(3, 3, 3, 0.18) 76%,
+      rgba(3, 3, 3, 0.66) 100%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(3, 3, 3, 0.18),
+      rgba(3, 3, 3, 0.82)
+    ),
+    url(
+      "/assets/braless/elements/hero-atmosphere-left-right%20Sep%2020,%202026,%2002_05_33%20PM.png"
+    )
+    center / cover no-repeat;
+
+  opacity: 0.9;
+
+  animation:
+    heroAtmosphereMove
+    18s
+    ease-in-out
+    infinite
+    alternate;
+}
+
+.heroMotion {
+  position: absolute;
+  inset: 0;
+
+  z-index: -3;
+
+  overflow: hidden;
+
+  pointer-events: none;
+}
+
+.heroMotionVideo {
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+
+  object-position: center;
+
+  opacity: 0.28;
+
+  filter:
+    saturate(1.15)
+    contrast(1.08)
+    brightness(0.7);
+
+  mix-blend-mode: screen;
+
+  transform: scale(1.08);
+}
+
+.heroInner {
+  position: relative;
+  z-index: 5;
+
+  width: min(
+    var(--content),
+    100%
+  );
+
+  min-height:
+    min(760px, 82vh);
+
+  margin: 0 auto;
+
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 0.9fr)
+    minmax(400px, 1.1fr);
+
+  align-items: center;
+
+  gap:
+    clamp(30px, 5vw, 80px);
+}
+
+.heroCopy {
+  position: relative;
+  z-index: 10;
+
+  max-width: 570px;
+}
+
+.hero h1 {
+  margin: 0;
+
+  color: var(--cream);
+
+  font:
+    800
+    clamp(72px, 9vw, 148px)
+    / 0.78
+    Arial,
+    sans-serif;
+
+  letter-spacing: -0.085em;
+}
+
+.hero h1 span {
+  display: block;
+
+  color: var(--red-bright);
+}
+
+.heroTagline {
+  margin: 28px 0 0;
+
+  color: var(--cream);
+
+  font:
+    400
+    clamp(25px, 3vw, 44px)
+    / 0.95
+    Georgia,
+    serif;
+
+  letter-spacing: -0.035em;
+}
+
+.heroMeta {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap:
+    10px 22px;
+
+  margin:
+    27px 0
+    30px;
+
+  color: var(--gold-soft);
+
+  font:
+    800 9px/1.4
+    Arial,
+    sans-serif;
+
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.heroPoster {
+  position: relative;
+
+  justify-self: end;
+
+  width: min(
+    760px,
+    100%
+  );
+
+  aspect-ratio: 16 / 9;
+
+  overflow: hidden;
+
+  border:
+    1px solid
+    rgba(215, 181, 109, 0.36);
+
+  background: #050505;
+
+  box-shadow:
+    0 40px 100px
+      rgba(0, 0, 0, 0.8),
+    0 0 70px
+      rgba(168, 15, 24, 0.14);
+}
+
+.heroPoster::before {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+
+  z-index: 2;
+
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(3, 3, 3, 0.15),
+      rgba(3, 3, 3, 0)
+    ),
+    linear-gradient(
+      180deg,
+      rgba(3, 3, 3, 0.05),
+      rgba(3, 3, 3, 0.32)
+    );
+}
+
+.heroPoster img {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+
+  transform:
+    scale(1.025);
+
+  animation:
+    flyerDrift
+    15s
+    ease-in-out
+    infinite
+    alternate;
+}
+
+.heroBottom {
+  position: absolute;
+
+  left:
+    clamp(20px, 4vw, 60px);
+  right:
+    clamp(20px, 4vw, 60px);
+  bottom: 22px;
+
+  z-index: 6;
+
+  display: flex;
+  justify-content: space-between;
+
+  color:
+    rgba(
+      245,
+      239,
+      228,
+      0.5
+    );
+
+  font:
+    800 8px/1
+    Arial,
+    sans-serif;
+
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.contactTrigger {
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.header .contactTrigger {
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 17px;
+  background: var(--gold);
+  color: #090705;
+  font: 800 8px/1 Arial, sans-serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: transform 180ms ease, filter 180ms ease;
+}
+
+.header .contactTrigger:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+
+.hero .contactTrigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50px;
+  padding: 0 24px;
+  background: linear-gradient(135deg, #ed2632, #c9131d);
+  color: #fff;
+  font: 800 10px/1 Arial, sans-serif;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  box-shadow: 0 14px 38px rgba(224, 32, 45, 0.22);
+  transition: transform 180ms ease, filter 180ms ease;
+}
+
+.hero .contactTrigger:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+
+.goldContactTrigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50px;
+  padding: 0 24px;
+  border: 0;
+  background: var(--gold);
+  color: #090705;
+  cursor: pointer;
+  font: 800 10px/1 Arial, sans-serif;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  transition: transform 180ms ease, filter 180ms ease;
+}
+
+.goldContactTrigger:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+
+.hero .goldContactTrigger {
+  background: var(--gold);
+  color: #090705;
+  box-shadow: none;
+}
+
+.contactFloating {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 45;
+  min-height: 42px;
+  padding: 0 18px;
+  border: 1px solid var(--gold);
+  background: rgba(3, 3, 3, 0.88);
+  color: var(--gold-bright);
+  cursor: pointer;
+  font: 800 9px/1 Arial, sans-serif;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+}
+
+.contactBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(10px);
+  overflow-y: auto;
+}
+
+.contactModal {
+  position: relative;
+  width: min(100%, 520px);
+  max-height: calc(100svh - 48px);
+  overflow-y: auto;
+  padding: 38px 34px 34px;
+  border: 1px solid rgba(215, 181, 109, 0.86);
+  border-radius: 10px;
+  background: linear-gradient(145deg, rgba(20, 16, 13, 0.98), rgba(5, 5, 5, 0.98));
+  color: var(--cream);
+  box-shadow: 0 0 0 1px rgba(215, 181, 109, 0.08), 0 24px 90px rgba(0, 0, 0, 0.78), 0 0 42px rgba(215, 181, 109, 0.14);
+}
+
+.contactClose {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  background: transparent;
+  color: var(--cream);
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.contactModal > .eyebrow {
+  margin-bottom: 10px;
+}
+
+.contactModal h2 {
+  margin: 0;
+  font: 400 clamp(42px, 7vw, 58px)/0.95 Georgia, serif;
+  letter-spacing: -0.04em;
+}
+
+.contactIntro {
+  max-width: 430px;
+  margin: 12px 0 26px;
+  color: var(--cream);
+  font: 400 14px/1.55 Arial, sans-serif;
+}
+
+.contactModal :global(.enquiryPanel) {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.contactModal :global(.panelHeading) {
+  display: none;
+}
+
+.contactModal :global(.enquiryForm) {
+  display: grid;
+  gap: 16px;
+}
+
+.contactModal :global(.enquiryForm label) {
+  color: var(--cream);
+  font: 800 9px/1.2 Arial, sans-serif;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.contactModal :global(.enquiryForm input),
+.contactModal :global(.enquiryForm textarea) {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  border: 1px solid rgba(245, 239, 228, 0.28);
+  border-radius: 5px;
+  padding: 13px 14px;
+  background: rgba(3, 3, 3, 0.42);
+  color: var(--cream);
+  font: 400 14px/1.4 Arial, sans-serif;
+}
+
+.contactModal :global(.enquiryForm textarea) {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.contactModal :global(.enquiryForm input:focus),
+.contactModal :global(.enquiryForm textarea:focus) {
+  border-color: var(--gold);
+  outline: 2px solid rgba(215, 181, 109, 0.22);
+  outline-offset: 1px;
+}
+
+.contactModal :global(.enquiryForm .button),
+.contactModal :global(.success .button) {
+  min-height: 48px;
+  border: 0;
+  border-radius: 5px;
+  background: linear-gradient(135deg, #f0ca78, #c9943d);
+  color: #090705;
+  cursor: pointer;
+  font: 800 10px/1 Arial, sans-serif;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.contactModal :global(.success) {
+  padding-top: 8px;
+}
+
+.contactModal :global(.success h2) {
+  margin: 0 0 12px;
+  color: var(--gold-bright);
+  font: 800 20px/1 Arial, sans-serif;
+  letter-spacing: 0.16em;
+}
+
+.contactModal :global(.success p) {
+  margin: 0 0 24px;
+  color: var(--cream);
+  font: 400 14px/1.6 Arial, sans-serif;
+}
+
+.contactModal :global(.success .button) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  text-decoration: none;
+}
+
+@media (max-width: 560px) {
+  .contactBackdrop {
+    align-items: end;
+    padding: 12px;
+  }
+
+  .contactModal {
+    max-height: calc(100svh - 24px);
+    padding: 34px 20px 22px;
+  }
+
+  .contactFloating {
+    right: 14px;
+    bottom: 14px;
+  }
+}
+
+
+/* ============================================================
+   EXPERIENCE
+   ============================================================ */
+
+.experience {
+  position: relative;
+  isolation: isolate;
+
+  overflow: hidden;
+
+  padding:
+    clamp(100px, 10vw, 155px)
+    clamp(20px, 5vw, 72px)
+    clamp(90px, 9vw, 135px);
+
+  background:
+    radial-gradient(
+      ellipse at 78% 38%,
+      rgba(168, 15, 24, 0.12),
+      transparent 32%
+    ),
+    #060606;
+}
+
+.experience::before {
+  content: "";
+
+  position: absolute;
+
+  left: -15%;
+  bottom: -25%;
+
+  width: 55vw;
+  height: 55vw;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      ellipse,
+      rgba(215, 181, 109, 0.08),
+      transparent 68%
+    );
+
+  filter: blur(30px);
+
+  pointer-events: none;
+}
+
+.experienceGrid {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 0.95fr)
+    minmax(420px, 1.05fr);
+
+  align-items: center;
+
+  gap:
+    clamp(40px, 7vw, 110px);
+}
+
+.experienceCopy {
+  position: relative;
+  z-index: 5;
+}
+
+.experience h2 {
+  margin: 0;
+
+  color: var(--cream);
+
+  font:
+    400
+    clamp(54px, 6.7vw, 104px)
+    / 0.84
+    Georgia,
+    serif;
+
+  letter-spacing: -0.06em;
+}
+
+.experienceLead {
+  max-width: 520px;
+
+  margin:
+    32px 0
+    38px;
+
+  color: var(--muted);
+
+  font:
+    400 15px/1.75
+    Arial,
+    sans-serif;
+}
+
+.valueMarkers {
+  display: grid;
+
+  grid-template-columns:
+    1fr 1fr;
+
+  gap: 14px 24px;
+
+  max-width: 520px;
+}
+
+.valueMarkers div {
+  display: grid;
+
+  grid-template-columns:
+    28px 1fr;
+
+  gap: 10px;
+
+  padding-top: 13px;
+
+  border-top:
+    1px solid
+    rgba(215, 181, 109, 0.42);
+}
+
+.valueMarkers span {
+  color: var(--gold);
+
+  font:
+    800 8px/1
+    Arial,
+    sans-serif;
+
+  letter-spacing: 0.12em;
+}
+
+.valueMarkers strong {
+  color: var(--cream);
+
+  font:
+    800 9px/1.3
+    Arial,
+    sans-serif;
+
+  letter-spacing: 0.12em;
+}
+
+.experienceArtwork {
+  position: relative;
+
+  min-height: 520px;
+
+  display: grid;
+  place-items: center;
+}
+
+.experienceArtworkGlow {
+  position: absolute;
+
+  width: 70%;
+  height: 70%;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(168, 15, 24, 0.22),
+      transparent 68%
+    );
+
+  filter: blur(45px);
+}
+
+.experienceArtworkFrame {
+  position: relative;
+  z-index: 2;
+
+  width: min(
+    560px,
+    100%
+  );
+
+  aspect-ratio: 1 / 0.92;
+
+  overflow: hidden;
+
+  border:
+    1px solid
+    rgba(215, 181, 109, 0.35);
+
+  background:
+    radial-gradient(
+      circle at 50% 45%,
+      rgba(168, 15, 24, 0.2),
+      transparent 48%
+    ),
+    #080808;
+
+  box-shadow:
+    0 35px 85px
+      rgba(0, 0, 0, 0.72),
+    0 0 55px
+      rgba(168, 15, 24, 0.12);
+}
+
+.experienceArtworkFrame::before {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+
+  z-index: 2;
+
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(3, 3, 3, 0.05),
+      rgba(3, 3, 3, 0.58)
+    );
+}
+
+.experienceArtworkFrame img {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+
+  padding:
+    clamp(20px, 4vw, 42px);
+
+  filter:
+    saturate(1.05)
+    contrast(1.04);
+
+  transform: scale(1.02);
+}
+
+.experienceArtworkLabel {
+  position: absolute;
+
+  left: 22px;
+  right: 22px;
+  bottom: 18px;
+
+  z-index: 5;
+
+  display: flex;
+  justify-content: space-between;
+
+  color:
+    rgba(
+      245,
+      239,
+      228,
+      0.72
+    );
+
+  font:
+    800 8px/1
+    Arial,
+    sans-serif;
+
+  letter-spacing: 0.2em;
+}
+
+.experienceFootage {
+  position: relative;
+
+  width: min(
+    1000px,
+    100%
+  );
+
+  aspect-ratio: 16 / 7;
+
+  margin:
+    70px
+    0 0
+    auto;
+
+  overflow: hidden;
+
+  border:
+    1px solid
+    rgba(215, 181, 109, 0.2);
+
+  background: #080808;
+
+  box-shadow:
+    0 30px 75px
+      rgba(0, 0, 0, 0.65);
+}
+
+.experienceFootage video {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+
+  filter:
+    saturate(0.96)
+    contrast(1.08)
+    brightness(0.9);
+}
+
+.experienceFootage::after {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+
+  z-index: 2;
+
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      180deg,
+      transparent 45%,
+      rgba(0, 0, 0, 0.65)
+    );
+}
+
+.experienceFootageOverlay {
+  position: absolute;
+
+  left: 22px;
+  right: 22px;
+  bottom: 18px;
+
+  z-index: 5;
+
+  display: flex;
+  justify-content: space-between;
+
+  color:
+    rgba(
+      245,
+      239,
+      228,
+      0.72
+    );
+
+  font:
+    800 8px/1
+    Arial,
+    sans-serif;
+
+  letter-spacing: 0.18em;
+}
+
+
+/* ============================================================
+   MEDIA
+   ============================================================ */
+
+.media {
+  position: relative;
+  isolation: isolate;
+
+  overflow: hidden;
+
+  padding:
+    clamp(90px, 9vw, 140px)
+    clamp(20px, 5vw, 72px);
+
+  background:
+    radial-gradient(
+      ellipse at 50% 45%,
+      rgba(168, 15, 24, 0.1),
+      transparent 48%
+    ),
+    #08080a;
+
+  border-top:
+    1px solid
+    var(--line);
+}
+
+.media::before {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+
+  z-index: -1;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(8, 8, 10, 0.9),
+      rgba(8, 8, 10, 0.98)
+    ),
+    url(
+      "/assets/braless/elements/hero-atmosphere-left-right%20Sep%2020,%202026,%2002_05_33%20PM.png"
+    )
+    center / cover no-repeat;
+
+  opacity: 0.38;
+}
+
+.sectionHeading {
+  display: flex;
+
+  align-items: flex-end;
+  justify-content: space-between;
+
+  gap: 50px;
+
+  margin-bottom: 48px;
+}
+
+.sectionHeading h2 {
+  margin: 0;
+
+  color: var(--cream);
+
+  font:
+    400
+    clamp(54px, 6.5vw, 100px)
+    / 0.84
+    Georgia,
+    serif;
+
+  letter-spacing: -0.06em;
+}
+
+.sectionSideText {
+  max-width: 360px;
+
+  margin: 0;
+
+  color: var(--muted);
+
+  font:
+    400 14px/1.75
+    Arial,
+    sans-serif;
+}
+
+.mediaGrid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(5, minmax(0, 1fr));
+
+  gap: 12px;
+}
+
+.mediaTile {
+  position: relative;
+
+  min-width: 0;
+
+  aspect-ratio: 1 / 1;
+
+  overflow: hidden;
+
+  background: #060606;
+
+  border:
+    1px solid
+    rgba(245, 239, 228, 0.1);
+
+  box-shadow:
+    0 20px 50px
+      rgba(0, 0, 0, 0.45);
+
+  transition:
+    transform 300ms ease,
+    border-color 300ms ease;
+}
+
+.mediaTile::after {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+
+  z-index: 2;
+
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      180deg,
+      transparent 55%,
+      rgba(0, 0, 0, 0.3)
+    );
+}
+
+.mediaTile img,
+.mediaTile video {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+
+  object-position: center;
+
+  transition:
+    transform 700ms
+    cubic-bezier(
+      0.2,
+      0.7,
+      0.2,
+      1
+    );
+}
+
+.mediaTile:first-child img {
+  transform: scale(1.07);
+}
+
+.mediaTile:hover {
+  transform: translateY(-5px);
+
+  border-color:
+    rgba(
+      215,
+      181,
+      109,
+      0.4
+    );
+}
+
+.mediaTile:hover img,
+.mediaTile:hover video {
+  transform: scale(1.045);
+}
+
+
+/* ============================================================
+   WHAT'S NEXT + HOTEL
+   ============================================================ */
+
+.whatsNext {
+  position: relative;
+  isolation: isolate;
+
+  overflow: hidden;
+
+  padding:
+    clamp(95px, 10vw, 145px)
+    clamp(20px, 5vw, 72px);
+
+  background:
+    linear-gradient(
+      110deg,
+      #050505 0%,
+      #090607 52%,
+      #120907 100%
+    );
+}
+
+.whatsNextAtmosphere {
+  position: absolute;
+
+  top: 0;
+  right: 0;
+  bottom: 0;
+
+  z-index: -1;
+
+  width: 55%;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(5, 5, 5, 0.98) 0%,
+      rgba(5, 5, 5, 0.72) 28%,
+      rgba(5, 5, 5, 0.25) 72%,
+      rgba(5, 5, 5, 0.52) 100%
+    ),
+    url(
+      "/assets/braless/elements/whats-next-hotel-atmosphere%20Sep%2020,%202026,%2002_15_36%20PM.png"
+    )
+    center / cover no-repeat;
+
+  opacity: 0.72;
+
+  animation:
+    whatsNextMove
+    20s
+    ease-in-out
+    infinite
+    alternate;
+}
+
+.whatsNextGrid {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 0.85fr)
+    minmax(430px, 1.15fr);
+
+  align-items: stretch;
+
+  gap:
+    clamp(40px, 6vw, 90px);
+}
+
+.eventDetails {
+  align-self: center;
+
+  padding:
+    20px
+    0;
+}
+
+.eventDetails h2 {
+  margin: 0;
+
+  color: var(--cream);
+
+  font:
+    400
+    clamp(58px, 7vw, 108px)
+    / 0.82
+    Georgia,
+    serif;
+
+  letter-spacing: -0.065em;
+}
+
+.eventDetailsList {
+  display: grid;
+
+  gap: 18px;
+
+  margin:
+    42px 0
+    36px;
+
+  max-width: 510px;
+}
+
+.eventDetailsList > div {
+  display: grid;
+
+  grid-template-columns:
+    80px 1fr;
+
+  gap: 20px;
+
+  padding-top: 14px;
+
+  border-top:
+    1px solid
+    rgba(215, 181, 109, 0.34);
+}
+
+.eventDetailsList span {
+  color: var(--gold);
+
+  font:
+    800 8px/1.4
+    Arial,
+    sans-serif;
+
+  letter-spacing: 0.15em;
+}
+
+.eventDetailsList strong {
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+
+  color: var(--cream);
+
+  font:
+    800 11px/1.4
+    Arial,
+    sans-serif;
+
+  letter-spacing: 0.1em;
+}
+
+.eventDetailsList small {
+  color: var(--muted);
+
+  font:
+    700 8px/1.4
+    Arial,
+    sans-serif;
+
+  letter-spacing: 0.14em;
+}
+
+.hotelPanel {
+  position: relative;
+
+  min-height: 520px;
+
+  overflow: hidden;
+
+  display: flex;
+  align-items: flex-end;
+
+  border:
+    1px solid
+    rgba(215, 181, 109, 0.25);
+
+  background: #080808;
+
+  box-shadow:
+    0 35px 85px
+      rgba(0, 0, 0, 0.7);
+}
+
+.hotelPanelImage {
+  position: absolute;
+  inset: 0;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(3, 3, 3, 0.05) 15%,
+      rgba(3, 3, 3, 0.3) 48%,
+      rgba(3, 3, 3, 0.92) 100%
+    ),
+    url(
+      "/assets/braless/elements/hotel-bridge-atmosphere%20Sep%2020,%202026,%2002_20_51%20PM.png"
+    )
+    center / cover no-repeat;
+
+  animation:
+    hotelMove
+    18s
+    ease-in-out
+    infinite
+    alternate;
+}
+
+.hotelPanelContent {
+  position: relative;
+  z-index: 3;
+
+  width: 100%;
+
+  padding:
+    clamp(28px, 4vw, 48px);
+}
+
+.hotelPanelContent h3 {
+  margin: 0;
+
+  color: var(--cream);
+
+  font:
+    400
+    clamp(48px, 6vw, 86px)
+    / 0.84
+    Georgia,
+    serif;
+
+  letter-spacing: -0.06em;
+}
+
+.hotelPanelContent p:not(.eyebrow) {
+  margin:
+    20px 0
+    25px;
+
+  color: var(--muted);
+
+  font:
+    400 14px/1.7
+    Arial,
+    sans-serif;
+}
+
+.hotelCta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 52px;
+
+  padding: 0 24px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #f1ca73,
+      #d5a743
+    );
+
+  color: #120d06 !important;
+
+  font:
+    900 9px/1
+    Arial,
+    sans-serif;
+
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+
+  border:
+    1px solid
+    rgba(
+      255,
+      231,
+      166,
+      0.6
+    );
+
+  transition:
+    transform 180ms ease,
+    filter 180ms ease;
+}
+
+.hotelCta:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+
+.footer {
+  padding:
+    28px
+    clamp(20px, 5vw, 72px);
+
+  background: #030303;
+
+  border-top:
+    1px solid
+    rgba(245, 239, 228, 0.1);
+
+  color:
+    rgba(
+      245,
+      239,
+      228,
+      0.48
+    );
+
+  font:
+    700 8px/1.4
+    Arial,
+    sans-serif;
+
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.footerInner {
+  width: min(
+    var(--content),
+    100%
+  );
+
+  margin: 0 auto;
+
+  display: grid;
+
+  grid-template-columns:
+    1fr auto auto;
+
+  align-items: center;
+
+  gap: 30px;
+}
+
+.footerBrand {
+  width: 100px;
+}
+
+.footerBrand img {
+  display: block;
+
+  width: 100%;
+  height: auto;
+}
+
+
+/* ============================================================
+   RESPONSIVE — TABLET
+   ============================================================ */
+
+@media (max-width: 1100px) {
+  .headerInner {
+    grid-template-columns:
+      auto
+      1fr
+      auto;
+  }
+
+  .nav {
+    gap: 15px;
+  }
+
+  .heroInner {
+    grid-template-columns:
+      minmax(0, 0.85fr)
+      minmax(360px, 1.15fr);
+
+    gap: 35px;
+  }
+
+  /* Keep all five campaign tiles visible at the 1024px desktop/tablet target. */
+  .mediaGrid {
+    grid-template-columns:
+      repeat(5, minmax(0, 1fr));
+  }
+
+  .mediaTile:first-child {
+    grid-column: auto;
+  }
+
+  .whatsNextGrid {
+    grid-template-columns:
+      1fr 1fr;
+  }
+
+  .hotelPanel {
+    min-height: 480px;
+  }
+}
+
+
+/* ============================================================
+   MEDIA — RESPONSIVE FALLBACK
+   ============================================================ */
+
+@media (max-width: 900px) and (min-width: 769px) {
+  .mediaGrid {
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr));
+  }
+
+  .mediaTile:first-child {
+    grid-column: auto;
+  }
+}
+
+
+/* ============================================================
+   RESPONSIVE — MOBILE
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .sectionInner {
+    width:
+      min(
+        var(--content),
+        calc(100% - 32px)
+      );
+  }
+
+  .header {
+    position: absolute;
+
+    padding:
+      16px;
+  }
+
+  .headerInner {
+    display: flex;
+
+    justify-content:
+      space-between;
+
+    gap: 12px;
+  }
+
+  .brand {
+    width: 92px;
+  }
+
+  .nav {
+    display: none;
+  }
+
+  .headerCta {
+    min-height: 36px;
+
+    padding:
+      0 12px;
+
+    font-size: 7px;
+  }
+
+  /* HERO */
+
+  .hero {
+    min-height: 820px;
+
+    padding:
+      105px
+      16px
+      50px;
+  }
+
+  .heroAtmosphere {
+    background:
+      linear-gradient(
+        180deg,
+        rgba(3, 3, 3, 0.18) 0%,
+        rgba(3, 3, 3, 0.3) 35%,
+        rgba(3, 3, 3, 0.94) 100%
+      ),
+      url(
+        "/assets/braless/elements/hero-atmosphere-left-right%20Sep%2020,%202026,%2002_05_33%20PM.png"
+      )
+      center / cover no-repeat;
+  }
+
+  .heroInner {
+    min-height: 710px;
+
+    display: flex;
+    flex-direction: column;
+
+    justify-content:
+      flex-end;
+
+    gap: 30px;
+  }
+
+  .heroPoster {
+    position: absolute;
+
+    top: 100px;
+    left: 50%;
+
+    width: 92vw;
+
+    transform:
+      translateX(-50%);
+
+    opacity: 0.78;
+  }
+
+  .heroCopy {
+    width: 100%;
+
+    padding-top:
+      360px;
+  }
+
+  .hero h1 {
+    font-size:
+      clamp(
+        64px,
+        17vw,
+        92px
+      );
+  }
+
+  .heroTagline {
+    margin-top: 22px;
+
+    font-size:
+      clamp(
+        24px,
+        7vw,
+        34px
+      );
+  }
+
+  .heroMeta {
+    gap:
+      8px 14px;
+
+    margin:
+      20px 0
+      24px;
+
+    font-size: 8px;
+  }
+
+  .heroBottom {
+    left: 16px;
+    right: 16px;
+
+    bottom: 15px;
+  }
+
+  /* EXPERIENCE */
+
+  .experience {
+    padding:
+      90px 16px;
+  }
+
+  .experienceGrid {
+    grid-template-columns:
+      1fr;
+
+    gap: 42px;
+  }
+
+  .experience h2 {
+    font-size:
+      clamp(
+        50px,
+        14vw,
+        76px
+      );
+  }
+
+  .experienceLead {
+    margin:
+      26px 0
+      32px;
+  }
+
+  .valueMarkers {
+    grid-template-columns:
+      1fr 1fr;
+
+    gap: 12px;
+  }
+
+  .experienceArtwork {
+    min-height:
+      380px;
+  }
+
+  .experienceArtworkFrame {
+    width: 100%;
+
+    max-width: 480px;
+  }
+
+  .experienceFootage {
+    margin-top: 45px;
+
+    aspect-ratio:
+      16 / 10;
+  }
+
+  /* MEDIA */
+
+  .media {
+    padding:
+      85px 16px;
+  }
+
+  .sectionHeading {
+    display: block;
+
+    margin-bottom: 34px;
+  }
+
+  .sectionHeading h2 {
+    font-size:
+      clamp(
+        50px,
+        14vw,
+        76px
+      );
+  }
+
+  .sectionSideText {
+    margin-top: 24px;
+  }
+
+  .mediaGrid {
+    grid-template-columns:
+      1fr 1fr;
+
+    gap: 8px;
+  }
+
+  .mediaTile {
+    aspect-ratio:
+      1 / 1;
+  }
+
+  .mediaTile:first-child {
+    grid-column:
+      1 / -1;
+
+    aspect-ratio:
+      16 / 10;
+  }
+
+  /* WHAT'S NEXT */
+
+  .whatsNext {
+    padding:
+      85px 16px;
+  }
+
+  .whatsNextAtmosphere {
+    top: auto;
+    bottom: 0;
+
+    width: 100%;
+    height: 48%;
+
+    background:
+      linear-gradient(
+        180deg,
+        rgba(5, 5, 5, 0.98),
+        rgba(5, 5, 5, 0.32),
+        rgba(5, 5, 5, 0.78)
+      ),
+      url(
+        "/assets/braless/elements/whats-next-hotel-atmosphere%20Sep%2020,%202026,%2002_15_36%20PM.png"
+      )
+      center / cover no-repeat;
+  }
+
+  .whatsNextGrid {
+    grid-template-columns:
+      1fr;
+
+    gap: 45px;
+  }
+
+  .eventDetails h2 {
+    font-size:
+      clamp(
+        52px,
+        14vw,
+        78px
+      );
+  }
+
+  .eventDetailsList {
+    margin:
+      32px 0
+      30px;
+  }
+
+  .hotelPanel {
+    min-height:
+      510px;
+  }
+
+  .hotelPanelContent h3 {
+    font-size:
+      clamp(
+        46px,
+        12vw,
+        70px
+      );
+  }
+
+  /* FOOTER */
+
+  .footer {
+    padding:
+      26px 16px;
+  }
+
+  .footerInner {
+    grid-template-columns:
+      1fr;
+
+    gap: 12px;
+  }
+
+  .footerBrand {
+    width: 90px;
+  }
+}
+
+
+/* ============================================================
+   SMALL PHONES
+   ============================================================ */
+
+@media (max-width: 480px) {
+  .hero {
+    min-height: 790px;
+  }
+
+  .heroPoster {
+    top: 95px;
+
+    width: 96vw;
+  }
+
+  .heroCopy {
+    padding-top:
+      330px;
+  }
+
+  .hero h1 {
+    font-size:
+      clamp(
+        60px,
+        18vw,
+        82px
+      );
+  }
+
+  .heroBottom {
+    display: none;
+  }
+
+  .valueMarkers {
+    grid-template-columns:
+      1fr;
+  }
+
+  .mediaGrid {
+    grid-template-columns:
+      1fr 1fr;
+  }
+
+  .mediaTile:first-child {
+    aspect-ratio:
+      4 / 3;
+  }
+
+  .eventDetailsList > div {
+    grid-template-columns:
+      65px 1fr;
+
+    gap: 12px;
+  }
+}
+
+
+/* ============================================================
+   CAMPAIGN-SPECIFIC ARTWORK + VIDEO CONTROLS
+   ============================================================ */
+
+.experienceArtworkImage {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(3,3,3,.04), rgba(3,3,3,.66)),
+    url("/assets/braless/elements/braless-party-girls-cutout%20Sep%2020,%202026,%2002_38_06%20PM.png")
+      center right / contain no-repeat;
+  opacity: .34;
+  filter: saturate(.92) drop-shadow(0 28px 60px rgba(0,0,0,.72));
+}
+
+.experienceArtworkOverlay {
+  position: absolute;
+  left: 22px;
+  right: 22px;
+  bottom: 18px;
+  z-index: 5;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  color: rgba(245,239,228,.72);
+  font: 800 8px/1 Arial, sans-serif;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+}
+
+.mediaPlay {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 5;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(245,239,228,.38);
+  border-radius: 50%;
+  background: rgba(3,3,3,.42);
+  color: var(--cream);
+  font: 700 10px/1 Arial, sans-serif;
+  backdrop-filter: blur(5px);
+  pointer-events: none;
+}
+
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .heroAtmosphere,
+  .heroPoster img,
+  .whatsNextAtmosphere,
+  .hotelPanelImage {
+    animation: none;
+  }
+
+  .mediaTile,
+  .mediaTile img,
+  .mediaTile video,
+  .primaryCta,
+  .headerCta,
+  .hotelCta {
+    transition: none;
+  }
+}
+
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+
+@keyframes heroAtmosphereMove {
+  from {
+    transform:
+      scale(1.01)
+      translate3d(0, 0, 0);
+  }
+
+  to {
+    transform:
+      scale(1.045)
+      translate3d(
+        -0.7%,
+        -0.3%,
+        0
+      );
+  }
+}
+
+@keyframes flyerDrift {
+  from {
+    transform:
+      scale(1.025)
+      translate3d(0, 0, 0);
+  }
+
+  to {
+    transform:
+      scale(1.055)
+      translate3d(
+        -0.4%,
+        -0.3%,
+        0
+      );
+  }
+}
+
+@keyframes whatsNextMove {
+  from {
+    transform:
+      scale(1.035)
+      translate3d(0, 0, 0);
+  }
+
+  to {
+    transform:
+      scale(1.065)
+      translate3d(
+        -1%,
+        0,
+        0
+      );
+  }
+}
+
+@keyframes hotelMove {
+  from {
+    transform:
+      scale(1.04)
+      translate3d(0, 0, 0);
+    background-position:
+      60% center;
+  }
+
+  to {
+    transform:
+      scale(1.08)
+      translate3d(
+        -0.7%,
+        0,
+        0
+      );
+    background-position:
+      68% center;
+  }
+}

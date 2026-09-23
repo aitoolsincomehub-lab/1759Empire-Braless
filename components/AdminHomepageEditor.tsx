@@ -150,6 +150,9 @@ export default function AdminHomepageEditor({
           Contact CTA
           <input value={String(form.contact_cta || "")} onChange={(event) => update("contact_cta", event.target.value)} />
         </label>
+        <label className="checkField"><input type="checkbox" checked={Boolean(form.show_rooms_section)} onChange={(event) => update("show_rooms_section", event.target.checked)} />Show rooms section</label>
+        <label className="checkField"><input type="checkbox" checked={Boolean(form.show_events_section)} onChange={(event) => update("show_events_section", event.target.checked)} />Show events section</label>
+        <label className="checkField"><input type="checkbox" checked={Boolean(form.show_featured_event)} onChange={(event) => update("show_featured_event", event.target.checked)} />Show featured event</label>
 
         <div className="adminFieldFull">
           <AdminMediaPicker

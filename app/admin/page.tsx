@@ -14,17 +14,20 @@ export default async function AdminDashboard() {
   if (!user || user.app_metadata?.role !== "admin") redirect("/admin/login");
 
   const today = new Date().toISOString().slice(0, 10);
-  const [roomsCount, bookingsPending, eventsCount, todayBookings, recentBookings, recentEnquiries, recentGeneralEnquiries] = await Promise.all([
+  const [roomsCount, bookingsPending, eventsCount, todayBookings, inventoryLow, inventoryOut, recentBookings, recentEnquiries, recentGeneralEnquiries] = await Promise.all([
     supabase.from("rooms").select("id", { count: "exact", head: true }).eq("is_active", true),
     supabase.from("bookings").select("id", { count: "exact", head: true }).eq("status", "pending"),
     supabase.from("events").select("id", { count: "exact", head: true }).eq("is_active", true).gte("event_date", today),
     supabase.from("bookings").select("id", { count: "exact", head: true }).eq("check_in", today),
+    supabase.from("inventory_items").select("id", { count: "exact", head: true }).eq("is_active", true).eq("status", "low_stock"),
+    supabase.from("inventory_items").select("id", { count: "exact", head: true }).eq("is_active", true).eq("status", "out_of_stock"),
     supabase.from("bookings").select("*, room:rooms(name)").order("created_at", { ascending: false }).limit(8),
     supabase.from("event_reservations").select("*, event:events(title)").order("created_at", { ascending: false }).limit(8),
     supabase.from("general_enquiries").select("*").order("created_at", { ascending: false }).limit(8)
   ]);
 
-  const sourceCounts = (recentEnquiries.data || []).reduce<Record<string, number>>((counts, enquiry) => {
+  const allRecentEnquiries = [...(recentEnquiries.data || []), ...(recentGeneralEnquiries.data || [])];
+  const sourceCounts = allRecentEnquiries.reduce<Record<string, number>>((counts, enquiry) => {
     const source = (enquiry as { source?: string }).source || "Direct";
     counts[source] = (counts[source] || 0) + 1;
     return counts;
@@ -37,7 +40,9 @@ export default async function AdminDashboard() {
       <AdminStatCard label="Today's bookings" value={todayBookings.count ?? 0} />
       <AdminStatCard label="Pending bookings" value={bookingsPending.count ?? 0} />
       <AdminStatCard label="Upcoming events" value={eventsCount.count ?? 0} />
-      <AdminStatCard label="New enquiries" value={recentEnquiries.data?.filter((enquiry) => (enquiry as { status?: string }).status === "new").length ?? 0} />
+      <AdminStatCard label="Recent enquiries" value={(recentEnquiries.data || []).filter((enquiry) => (enquiry as { status?: string }).status === "new").length + (recentGeneralEnquiries.data?.length ?? 0)} />
+      <AdminStatCard label="Low inventory" value={inventoryLow.count ?? 0} />
+      <AdminStatCard label="Out of stock" value={inventoryOut.count ?? 0} />
     </section>
 
     <div className="adminDashboardGrid">

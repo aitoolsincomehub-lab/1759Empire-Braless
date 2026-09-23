@@ -10,7 +10,7 @@ export default async function MarketingEventsAdminPage() {
   if (!user || user.app_metadata?.role !== "admin") redirect("/admin/login");
 
   const [{ data: events }, { data: media }] = await Promise.all([
-    supabase.from("events").select("*").order("event_date", { ascending: false }).limit(24),
+    supabase.from("events").select("*").order("event_date", { ascending: false }).limit(48),
     supabase.from("media_assets").select("*").eq("section", "events").order("display_order", { ascending: true }).order("created_at", { ascending: false }).limit(48),
   ]);
 

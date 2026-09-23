@@ -1,168 +1,642 @@
 import Link from "next/link";
-import Countdown from "@/components/Countdown";
-import BrandedMedia from "@/components/BrandedMedia";
-import GeneralEnquiryForm from "@/components/GeneralEnquiryForm";
-import TrackedLink from "@/components/TrackedLink";
-import TrackedWhatsAppLink from "@/components/TrackedWhatsAppLink";
-import { findBralessEvent, getPublicCatalogue, isApprovedPublicAsset } from "@/lib/catalogue";
-import type { MediaAsset } from "@/types";
+import CinematicVideo from "@/components/CinematicVideo";
+import BralessContact1759 from "@/components/BralessContact1759";
+import { getPublicMediaPosts } from "@/lib/media-posts";
+import styles from "@/components/BralessCampaign.module.css";
 
-const FALLBACK_ROOMS = [
-  { id: "deluxe-room", name: "Deluxe Room", price: "", image: "/assets/rooms/room-1.webp", note: "A calm, comfortable place to land." },
-  { id: "executive-room", name: "Executive Room", price: "", image: "/assets/rooms/room-2.webp", note: "More room for longer stays and late nights." },
-];
-
-const SLOT_FALLBACKS = {
-  food: ["/assets/food/food-1.webp", "/assets/food/food-2.webp", "/assets/food/food-3.webp"],
-  drinks: "/assets/drinks/drinks-1.webp",
-  club: ["/assets/club-klass/club-klass-1.webp", "/assets/club-klass/club-klass-2.webp", "/assets/club-klass/club-klass-3.webp"],
-  braless: "/assets/braless/braless-1.webp",
-  viewing: "/assets/viewing-centre/viewing-centre-1.webp",
-  gallery: ["/assets/gallery/gallery-1.webp", "/assets/gallery/gallery-2.webp", "/assets/gallery/gallery-3.webp"],
+const BRALESS_MEDIA_IDS = {
+  flyer: "9687eb7b-0b24-4962-a01e-0bd04e50ad14",
+  redCarpet: "b7e31730-db74-4ba0-9fd6-d6a9e8e6af08",
+  videoOne: "eb9c6a93-5eff-4484-8339-4894184aab47",
+  videoTwo: "6b569d63-6503-4672-8413-c340731f4e12",
+  september: "c7375c02-45ff-4670-ae45-5e8c3ca860be",
 } as const;
 
-const OFFICIAL_SOCIAL_LINKS = {
-  instagram: "https://www.instagram.com/1759empire/",
-  tiktok: "https://www.tiktok.com/@1759empire",
-  email: "connect1759empire@gmail.com",
-} as const;
+type MediaAsset = {
+  id: string;
+  public_url: string;
+  storage_path?: string | null;
+  media_type?: string | null;
+  title?: string | null;
+};
 
-const PRODUCTION_ASSETS = new Set([
-  "/assets/hero/1759-exterior-current-hero.webp",
-  "/assets/hero/1759-exterior-current-mobile.webp",
-  "/assets/brand/1759-empire-logo-transparent.png",
-  "/assets/rooms/room-1.webp",
-  "/assets/rooms/room-2.webp",
-  "/assets/rooms/room-3.webp",
-  "/assets/food/food-1.webp",
-  "/assets/food/food-2.webp",
-  "/assets/food/food-3.webp",
-  "/assets/food/food-4.webp",
-  "/assets/drinks/drinks-1.webp",
-  "/assets/drinks/drinks-2.webp",
-  "/assets/drinks/drinks-3.webp",
-  "/assets/drinks/drinks-4.webp",
-  "/assets/drinks/drinks-5.webp",
-  "/assets/club-klass/club-klass-1.webp",
-  "/assets/club-klass/club-klass-2.webp",
-  "/assets/club-klass/club-klass-3.webp",
-  "/assets/club-klass/club-klass-4.webp",
-  "/assets/braless/braless-1.webp",
-  "/assets/braless/braless-2.webp",
-  "/assets/events/event-1.webp",
-  "/assets/events/event-2.webp",
-  "/assets/events/event-3.webp",
-  "/assets/viewing-centre/viewing-centre-1.webp",
-  "/assets/viewing-centre/viewing-centre-2.webp",
-  "/assets/gallery/gallery-1.webp",
-  "/assets/gallery/gallery-2.webp",
-  "/assets/gallery/gallery-3.webp",
-  "/assets/nightlife/nightlife-1.webp",
-  "/assets/nightlife/nightlife-2.webp",
-]);
-
-function localAssetOrEmpty(path: string) {
-  return PRODUCTION_ASSETS.has(path) ? path : "";
+function findAsset(
+  assets: MediaAsset[],
+  id: string,
+) {
+  return assets.find(
+    (asset) => asset.id === id,
+  );
 }
 
-function mediaFor(media: MediaAsset[], predicate: (item: MediaAsset) => boolean, fallback: string) {
-  return media.find((item) => item.is_published && predicate(item) && isApprovedPublicAsset(item.public_url))?.public_url || fallback;
-}
+export default async function HomePage() {
+  const { featured, videos } =
+    await getPublicMediaPosts();
 
-function mediaBySection(media: MediaAsset[], section: MediaAsset["section"], fallback: string, index = 0) {
-  const items = media.filter((item) => item.is_published && item.section === section && isApprovedPublicAsset(item.public_url));
-  return items[index]?.public_url || fallback;
-}
+  const allAssets = [
+    featured?.flyer,
+    ...videos,
+  ].filter(Boolean) as MediaAsset[];
 
-function mediaThumbnail(item: MediaAsset) {
-  return item.thumbnail_url || item.public_url || "";
-}
+  /*
+   * ----------------------------------------------------------
+   * VERIFIED LIVE SUPABASE MEDIA
+   * ----------------------------------------------------------
+   *
+   * These IDs were taken directly from the live
+   * public.media_assets records.
+   *
+   * TikTok / UltraSound is intentionally excluded.
+   */
 
-export default async function Home({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const catalogue = await getPublicCatalogue();
-  const query = await searchParams;
-  const attributionQuery = new URLSearchParams();
-  for (const key of ["utm_source", "utm_medium", "utm_campaign", "utm_content"]) {
-    const value = query[key];
-    if (typeof value === "string") attributionQuery.set(key, value);
-  }
-  const campaignSuffix = attributionQuery.toString() ? `?${attributionQuery.toString()}` : "";
-  const featuredEvent = catalogue.events.find((event) => event.is_featured) || catalogue.events[0] || null;
-  const bralessEvent = findBralessEvent(catalogue.events);
+  const flyer =
+    findAsset(
+      allAssets,
+      BRALESS_MEDIA_IDS.flyer,
+    );
 
-  const hero = isApprovedPublicAsset(catalogue.settings.hero_media_url) ? catalogue.settings.hero_media_url : "/assets/hero/1759-exterior-current-hero.webp";
-  const foodImages = SLOT_FALLBACKS.food.map((fallback, index) => mediaBySection(catalogue.media, "food", localAssetOrEmpty(fallback), index));
-  const clubImages = SLOT_FALLBACKS.club.map((fallback, index) => mediaBySection(catalogue.media, "club", localAssetOrEmpty(fallback), index));
-  const galleryImages = SLOT_FALLBACKS.gallery.map((fallback, index) => mediaBySection(catalogue.media, "gallery", localAssetOrEmpty(fallback), index));
-  const viewingImage = mediaBySection(catalogue.media, "tv", localAssetOrEmpty(SLOT_FALLBACKS.viewing));
-  const bralessImage = mediaBySection(catalogue.media, "braless", localAssetOrEmpty(SLOT_FALLBACKS.braless));
-  const bralessGallery = [bralessImage, mediaBySection(catalogue.media, "braless", localAssetOrEmpty(SLOT_FALLBACKS.braless), 1)];
+  const redCarpet =
+    findAsset(
+      allAssets,
+      BRALESS_MEDIA_IDS.redCarpet,
+    );
 
-  const displayedRooms = catalogue.rooms.length > 0
-    ? catalogue.rooms.map((room, index) => ({
-        id: room.id,
-        name: room.name,
-        price: room.price_per_night > 0 ? `₦${room.price_per_night.toLocaleString()}` : "",
-        image: mediaBySection(catalogue.media, "rooms", localAssetOrEmpty(FALLBACK_ROOMS[index % FALLBACK_ROOMS.length].image), index),
-        note: room.amenities.join(" · ") || room.description || "Details available on request",
-      }))
-    : FALLBACK_ROOMS;
+  const videoOne =
+    findAsset(
+      allAssets,
+      BRALESS_MEDIA_IDS.videoOne,
+    );
 
-  const youtube = catalogue.media.filter((item) => item.platform === "youtube" && item.is_published && (item.external_url || item.public_url)).slice(0, 3);
-  const mixcloud = catalogue.media.filter((item) => item.platform === "mixcloud" && item.is_published && (item.external_url || item.public_url)).slice(0, 3);
-  const highlights = catalogue.media.filter((item) => item.is_published && ["event_highlight", "event_recap", "event_teaser", "short", "dj_clip", "dj_set"].includes(item.content_type || "") && (item.external_url || item.public_url)).slice(0, 4);
-  const artists = catalogue.events.flatMap((event) => event.performer_socials || []).filter((artist) => Boolean(artist.instagram || artist.tiktok || artist.youtube || artist.mixcloud || artist.website));
+  const videoTwo =
+    findAsset(
+      allAssets,
+      BRALESS_MEDIA_IDS.videoTwo,
+    );
 
-  const eventImage = mediaFor(catalogue.media, (item) => item.section === "events" && isApprovedPublicAsset(item.public_url), "/assets/events/event-1.webp");
+  const septemberVideo =
+    findAsset(
+      allAssets,
+      BRALESS_MEDIA_IDS.september,
+    );
 
-  return <main>
-    <section className="hero" style={{ backgroundImage: `linear-gradient(90deg,rgba(7,7,7,.88) 0%,rgba(7,7,7,.58) 48%,rgba(7,7,7,.18) 100%),url("${hero}")` }}>
-      <nav className="nav" aria-label="Primary navigation">
-        <Link href="/" className="logoWrap" aria-label="1759 Empire home"><img src="/assets/brand/1759-empire-logo-transparent.png" alt="1759 Empire" /></Link>
-        <div className="links"><a href="#stay">Stay</a><a href="#dine">Dine</a><a href="#club">Club Klass</a><a href="#events">Events</a><a href="#live">1759 Live</a></div>
-        <TrackedLink className="button buttonOutline" href="/book" eventName="booking_cta_clicked">Check Availability</TrackedLink>
-      </nav>
-      <div className="heroContent">
-        <p className="eyebrow">AKUTE · LAGOS · 1759 EMPIRE</p>
-        <h1>{catalogue.settings.hero_headline.includes(".") ? <>{catalogue.settings.hero_headline.split(".")[0]}.<br /><em>{catalogue.settings.hero_headline.split(".").slice(1).join(".").trim()}</em></> : catalogue.settings.hero_headline}</h1>
-        <p className="heroText">{catalogue.settings.hero_subheadline}</p>
-        <div className="actions"><TrackedLink className="button" href="/book" eventName="booking_cta_clicked">{catalogue.settings.hero_primary_cta}</TrackedLink><a className="textLink" href="#club">{catalogue.settings.hero_secondary_cta} ↓</a></div>
-      </div>
-      <div className="heroMeta"><span>HOTEL · LOUNGE · CLUB</span><span>STAY · DINE · PARTY · WATCH · BELONG</span></div>
-    </section>
+  /*
+   * Keep the existing campaign CTA source.
+   */
+  const whatsappUrl =
+    featured?.cta_url ||
+    "";
 
-    <section className="experienceRail" aria-label="1759 experiences">
-      {["Luxury rooms", "Nigerian dining", "Club Klass", "Live events", "Viewing centre"].map((label, index) => <a href={["#stay", "#dine", "#club", "#events", "#viewing"][index]} key={label}><span>0{index + 1}</span><strong>{label}</strong><small>{["Rest in style", "Taste the culture", "Music. People. Energy.", "Make the night count", "Sports. Food. Company."][index]}</small></a>)}
-    </section>
+  const whatsappNumber =
+    whatsappUrl.match(/wa\.me\/([^?]+)/)?.[1] ||
+    "";
 
-    {catalogue.settings.show_featured_event && <section className="featuredEvent">
-      <div className="featuredEventCopy"><p className="eyebrow">{featuredEvent ? "EVENT OF THE MONTH" : "CLUB KLASS · EVENTS"}</p><h2>{featuredEvent ? <>{featuredEvent.title}<br /><em>is calling.</em></> : <>The next big night<br /><em>is calling.</em></>}</h2><p>{featuredEvent?.short_description || "Good music, full tables and a reason to make the night count."}</p>{featuredEvent?.show_countdown && <Countdown date={featuredEvent.event_date} time={featuredEvent.event_time} />}<div className="actions">{featuredEvent?.slug ? <TrackedLink className="button" href={`/events/${featuredEvent.slug}${campaignSuffix}`} eventName="event_cta_clicked">Explore event</TrackedLink> : <TrackedLink className="button" href={`/events${campaignSuffix}`} eventName="event_cta_clicked">See what's on</TrackedLink>}{catalogue.settings.whatsapp_number ? <TrackedWhatsAppLink className="textLink" context="featured_event" href={`https://wa.me/${catalogue.settings.whatsapp_number}?text=${encodeURIComponent("Hello 1759 Empire, I would like to make an event enquiry.")}`}>Event enquiry</TrackedWhatsAppLink> : <Link className="textLink" href={`/book${campaignSuffix}`}>Event enquiry</Link>}</div></div><BrandedMedia className="featuredEventMedia" src={eventImage} alt={featuredEvent?.title || "1759 Empire event"} fallback="Event artwork will appear here" />
-    </section>}
+  /*
+   * ----------------------------------------------------------
+   * MEDIA ORDER
+   * ----------------------------------------------------------
+   *
+   * 1. Flyer
+   * 2. Red Carpet
+   * 3. Video One
+   * 4. Video Two
+   * 5. 21 September Video
+   *
+   * TikTok is deliberately not included.
+   */
 
-    <section className="statement"><p className="eyebrow">THE 1759 EXPERIENCE</p><h2>One destination.<br /><em>Different reasons to stay.</em></h2><p>Check in, eat well, meet friends, celebrate something or stay out late. 1759 brings hospitality and entertainment together without making the experience feel complicated.</p></section>
+  const mediaItems = [
+    flyer
+      ? {
+          key: "flyer",
+          type: "image" as const,
+          src: flyer.public_url,
+          alt: "Braless Party campaign flyer",
+        }
+      : null,
 
-    {catalogue.settings.show_rooms_section && <section id="stay" className="section sectionLight"><div className="sectionHead"><div><p className="eyebrow">STAY</p><h2>Rooms & Suites</h2></div><TrackedLink href="/book" className="textLink dark" eventName="booking_cta_clicked">Check availability →</TrackedLink></div><div className="roomGrid">{displayedRooms.map((room) => <article className="room" key={room.id || room.name}><BrandedMedia className="mediaSlot" src={room.image} alt={room.name} fallback="Room photography coming soon" /><div className="roomBody"><div><h3>{room.name}</h3><p>{room.note}</p></div>{room.price && <strong>{room.price}<small>/night</small></strong>}</div></article>)}</div><div className="bathroomNote"><span>ROOM DETAIL</span><strong>Thoughtful details, calm interiors and an easy place to reset.</strong></div></section>}
+    redCarpet
+      ? {
+          key: "red-carpet",
+          type: "video" as const,
+          src: redCarpet.public_url,
+          start: 34,
+          end: 40,
+          alt: "Braless red carpet atmosphere",
+        }
+      : null,
 
-    <section id="dine" className="dine"><div className="dineCopy"><p className="eyebrow">DINE · DRINK</p><h2>Food for the table.<br /><em>Energy for the night.</em></h2><p>{catalogue.settings.dine_description}</p>{catalogue.menu.length > 0 && <div className="menuPreview">{catalogue.menu.slice(0, 6).map((item) => <div key={item.id}><strong>{item.name}</strong>{item.price > 0 && <span>₦{item.price.toLocaleString()}</span>}</div>)}</div>}<a className="button" href="#contact">Enquire about dining</a></div><div className="foodGrid">{foodImages.map((src, index) => <BrandedMedia key={src} className={`foodCard food${index + 1}`} src={src} alt={["Pepper chicken and Nigerian sides", "Goat pepper soup", "Jollof rice at 1759 Empire"][index]} fallback={["Pepper chicken", "Goat pepper soup", "Jollof rice"][index]}><span>{["FOOD AT 1759", "THE TABLE", "SIGNATURE DISHES"][index]}</span></BrandedMedia>)}</div></section>
+    videoOne
+      ? {
+          key: "video-one",
+          type: "video" as const,
+          src: videoOne.public_url,
+          start: 74,
+          end: 80,
+          alt: "Braless nightlife and crowd energy",
+        }
+      : null,
 
-    <section id="club" className="club"><div className="clubCopy"><p className="eyebrow">THE NIGHTLIFE DESTINATION</p><div className="clubTitle">CLUB<br /><span>KLASS</span></div><p>{catalogue.settings.club_description}</p><a className="button" href="#events">What's happening</a></div><div className="nightGrid">{clubImages.map((src, index) => <BrandedMedia className={`nightCard n${index}`} key={src} src={src} alt={["Club Klass atmosphere", "Live nightlife at 1759 Empire", "Late-night performance"][index]} fallback={["Club Klass", "Nightlife", "The night"][index]}><span>{["Club Klass", "Live nights", "After dark"][index]}</span></BrandedMedia>)}</div></section>
+    videoTwo
+      ? {
+          key: "video-two",
+          type: "video" as const,
+          src: videoTwo.public_url,
+          start: 40,
+          end: 49,
+          alt: "Braless live performance and crowd",
+        }
+      : null,
 
-    <section className="bralessSection"><div className="bralessMedia"><BrandedMedia src={bralessImage} alt="Braless Party at 1759 Empire" fallback="Braless Party" /></div><div className="bralessCopy"><p className="eyebrow">A RECURRING 1759 EXPERIENCE</p><h2>Braless<br /><em>Party.</em></h2><p>{bralessEvent?.short_description || "A recognizable 1759 night built around atmosphere, music and a room full of energy."}</p><Link className="button" href={bralessEvent?.slug ? `/events/${bralessEvent.slug}` : "/events"}>See what's happening</Link></div><div className="bralessDetail">{bralessGallery.map((src, index) => <BrandedMedia key={`${src}-${index}`} src={src} alt="Braless Party at 1759 Empire" fallback="Braless experience" />)}</div></section>
+    septemberVideo
+      ? {
+          key: "september-video",
+          type: "video" as const,
+          src: septemberVideo.public_url,
+          start: 0,
+          end: 13.4,
+          alt: "Braless Festival promotional video",
+        }
+      : null,
+  ].filter(Boolean) as Array<
+    | {
+        key: string;
+        type: "image";
+        src: string;
+        alt: string;
+      }
+    | {
+        key: string;
+        type: "video";
+        src: string;
+        start: number;
+        end: number;
+        alt: string;
+      }
+  >;
 
-    <section id="viewing" className="viewingCentre"><div className="viewingCopy"><p className="eyebrow">LOUNGE · VIEWING CENTRE</p><h2>Watch the game.<br /><em>Meet your people.</em></h2><p>{catalogue.settings.lounge_description}</p><a className="button" href="#contact">Plan your visit</a></div><BrandedMedia className="viewingMedia" src={viewingImage} fallback="Big screens. Good company." alt="Sports viewing lounge at 1759 Empire" /></section>
+  return (
+    <main className={styles.page}>
+      {/* =====================================================
+          HEADER
+          ===================================================== */}
 
-    {catalogue.settings.show_events_section && <section id="events" className="events"><div className="sectionHead"><div><p className="eyebrow">WHAT'S ON</p><h2>Events made<br /><em>for the night.</em></h2></div><Link className="textLink dark" href="/events">All events →</Link></div><div className="eventCard"><BrandedMedia className="eventMedia" src={eventImage} alt={featuredEvent?.title || "1759 Empire event"} fallback="Event artwork coming soon"><span>{featuredEvent?.title || "Club Klass"}</span></BrandedMedia><div className="eventInfo"><p className="eventLabel">1759 EMPIRE · EVENTS</p><h3>{featuredEvent?.title || "The next big night"}</h3><p>{featuredEvent?.description || "Good music, full tables and a reason to make the night count."}</p>{featuredEvent?.slug ? <Link className="textLink dark" href={`/events/${featuredEvent.slug}`}>Explore event →</Link> : <Link className="textLink dark" href="/events">Event enquiries →</Link>}</div></div></section>}
+      <header className={styles.header}>
+        <div className={styles.headerInner}>
+          <Link
+            href="/"
+            className={styles.brand}
+            aria-label="1759 Empire"
+          >
+            <img
+              src="/assets/brand/1759-empire-logo-transparent.png"
+              alt="1759 Empire"
+            />
+          </Link>
 
-    <section id="live" className="liveSection"><div className="sectionHead"><div><p className="eyebrow">1759 LIVE</p><h2>The sound, stories<br /><em>and energy of 1759.</em></h2><p>Our growing home for the nights, people and culture of the Empire.</p></div></div><div className="liveGrid"><article><BrandedMedia src={eventImage} alt="1759 Empire event" fallback="1759 TV" /><div><span>1759 TV</span><p>Watch the nights, events and people of 1759.</p></div></article><article><BrandedMedia src={clubImages[0]} alt="Club Klass atmosphere" fallback="1759 Music" /><div><span>1759 MUSIC</span><p>Music, DJs, mixes and the sound of the Empire.</p></div></article><article><BrandedMedia src={galleryImages[0]} alt="1759 Empire atmosphere" fallback="1759 Social" /><div><span>1759 SOCIAL</span><p>Follow what's happening at 1759.</p><div className="liveSocialLinks"><a href={OFFICIAL_SOCIAL_LINKS.instagram} target="_blank" rel="noreferrer">Instagram</a><a href={OFFICIAL_SOCIAL_LINKS.tiktok} target="_blank" rel="noreferrer">TikTok</a></div></div></article></div></section>
+          <nav
+            className={styles.nav}
+            aria-label="Primary navigation"
+          >
+            <a
+              href="#braless"
+              className={styles.navActive}
+            >
+              BRALESS
+            </a>
 
-    {(youtube.length > 0 || mixcloud.length > 0 || highlights.length > 0) && <section id="media" className="mediaHub"><div className="sectionHead"><div><p className="eyebrow">1759 LIVE · WATCH · LISTEN</p><h2>More from the Empire.</h2></div><span className="mediaHubHint">YouTube · Mixcloud · Event highlights</span></div><div className="mediaHubGrid">{[...youtube, ...mixcloud, ...highlights].slice(0, 6).map((item) => <article className="mediaHubCard" key={item.id}><a href={item.external_url || item.public_url || "#"} target={item.external_url ? "_blank" : undefined} rel={item.external_url ? "noreferrer" : undefined}><div className="mediaHubImage">{isApprovedPublicAsset(mediaThumbnail(item)) ? <img src={mediaThumbnail(item)} alt={item.alt_text || item.title || "1759 Empire media"} loading="lazy" /> : <div className="mediaFallback"><span className="mediaMark">1759</span><strong>{item.title || "Media feature"}</strong><small>Content slot</small></div>}</div><div><span>{item.platform || "website"} · {item.content_type || "media"}</span><strong>{item.title || "1759 Empire"}</strong><p>{item.caption || item.social_caption || "Watch, listen and stay close to the Empire."}</p></div></a></article>)}</div></section>}
+            <a href="#experience">
+              EXPERIENCE
+            </a>
 
-    {artists.length > 0 && <section className="artistsSection"><div className="sectionHead"><div><p className="eyebrow">FOLLOW THE ARTISTS</p><h2>DJ and artist links.</h2></div></div><div className="artistGrid">{artists.map((artist, index) => <article className="artistCard" key={`${artist.name}-${index}`}><strong>{artist.name}</strong>{artist.instagram && <a href={artist.instagram}>Instagram</a>}{artist.tiktok && <a href={artist.tiktok}>TikTok</a>}{artist.youtube && <a href={artist.youtube}>YouTube</a>}{artist.mixcloud && <a href={artist.mixcloud}>Mixcloud</a>}{artist.website && <a href={artist.website}>Website</a>}</article>)}</div></section>}
+            <a href="#media">
+              MEDIA
+            </a>
 
-    <section className="galleryIntro"><p className="eyebrow">THE ATMOSPHERE</p><h2>See the night.<br /><em>Then come experience it.</em></h2><div className="momentStrip">{galleryImages.map((src, index) => <BrandedMedia key={`${src || "gallery"}-${index}`} src={src} fallback={["Stay", "Dine", "Late nights"][index] || "1759 Empire atmosphere"} alt="1759 Empire atmosphere" />)}</div><p>Hotel calm, open-air energy and Club Klass after dark, all in one destination.</p></section>
+            <a href="#whats-next">
+              WHAT&apos;S NEXT
+            </a>
+          </nav>
 
-    <section id="contact" className="contact"><div><p className="eyebrow">FIND US</p><h2>{catalogue.settings.address}</h2><p>{catalogue.settings.contact_cta}</p><p>{catalogue.settings.phone || catalogue.settings.booking_contact}{catalogue.settings.email ? ` · ${catalogue.settings.email}` : ` · ${OFFICIAL_SOCIAL_LINKS.email}`}</p><div className="actions"><TrackedLink className="button" href="/book" eventName="booking_cta_clicked">Check room availability</TrackedLink>{catalogue.settings.whatsapp_number ? <TrackedWhatsAppLink className="textLink dark" context="contact" href={`https://wa.me/${catalogue.settings.whatsapp_number}?text=${encodeURIComponent("Hello 1759 Empire, I'd like to make an enquiry.")}`}>WhatsApp us</TrackedWhatsAppLink> : <Link className="textLink dark" href="/book">Contact 1759</Link>}</div></div><GeneralEnquiryForm whatsapp={catalogue.settings.whatsapp_number} /></section>
+          {whatsappUrl && (
+            <BralessContact1759
+              whatsapp={whatsappNumber}
+              showFloating
+              ownsModal
+            >
+              CONTACT 1759
+            </BralessContact1759>
+          )}
+        </div>
+      </header>
 
-    <footer><img src="/assets/brand/1759-empire-logo-transparent.png" alt={catalogue.settings.business_name} /><span>{catalogue.settings.business_name} · Hotel · Lounge · Club · © 2026 1759 Empire</span><span>Stay · Dine · Party · Watch · Belong</span><span><a href={OFFICIAL_SOCIAL_LINKS.instagram} target="_blank" rel="noreferrer">Instagram</a> · <a href={OFFICIAL_SOCIAL_LINKS.tiktok} target="_blank" rel="noreferrer">TikTok</a></span></footer>
-  </main>;
+      {/* =====================================================
+          HERO
+          ===================================================== */}
+
+      <section
+        id="braless"
+        className={styles.hero}
+      >
+        <div className={styles.heroAtmosphere} />
+
+        {videoOne && (
+          <div className={styles.heroMotion}>
+            <CinematicVideo
+              src={videoOne.public_url}
+              start={74}
+              end={82.15}
+              className={styles.heroMotionVideo}
+              ariaLabel="Braless nightlife atmosphere"
+            />
+          </div>
+        )}
+
+        <div className={styles.heroInner}>
+          <div className={styles.heroCopy}>
+            <p className={styles.eyebrow}>
+              1759 EMPIRE PRESENTS
+            </p>
+
+            <h1>
+              BRALESS
+              <span>PARTY.</span>
+            </h1>
+
+            <p className={styles.heroTagline}>
+              ONE YEAR. ONE NIGHT.
+            </p>
+
+            <div className={styles.heroMeta}>
+              <span>
+                26 SEPTEMBER 2026
+              </span>
+
+              <span>
+                10 PM — LATE
+              </span>
+
+              <span>
+                1759 EMPIRE LOUNGE
+              </span>
+            </div>
+
+            {whatsappUrl && (
+              <BralessContact1759 whatsapp={whatsappNumber} gold>
+                CONTACT 1759
+              </BralessContact1759>
+            )}
+          </div>
+
+          <div className={styles.heroPoster}>
+            {flyer && (
+              <img
+                src={flyer.public_url}
+                alt="Braless Party campaign flyer"
+              />
+            )}
+          </div>
+        </div>
+
+        <div className={styles.heroBottom}>
+          <span>AKUTE · LAGOS</span>
+          <span>1759 EMPIRE</span>
+          <span>26.09.26</span>
+        </div>
+      </section>
+
+      {/* =====================================================
+          EXPERIENCE
+          ===================================================== */}
+
+      <section
+        id="experience"
+        className={styles.experience}
+      >
+        <div className={styles.sectionInner}>
+          <div className={styles.experienceGrid}>
+            <div className={styles.experienceCopy}>
+              <p className={styles.eyebrow}>
+                THE EXPERIENCE
+              </p>
+
+              <h2>
+                ONE NIGHT.
+                <br />
+                NO ORDINARY
+                <br />
+                PARTY.
+              </h2>
+
+              <p className={styles.experienceLead}>
+                BRALESS is the nightlife
+                experience from 1759 Empire —
+                built around music, energy,
+                people and nights worth
+                remembering.
+              </p>
+
+              <div className={styles.valueMarkers}>
+                <div>
+                  <span>01</span>
+                  <strong>
+                    GREAT MUSIC
+                  </strong>
+                </div>
+
+                <div>
+                  <span>02</span>
+                  <strong>
+                    AMAZING PEOPLE
+                  </strong>
+                </div>
+
+                <div>
+                  <span>03</span>
+                  <strong>
+                    PREMIUM VIBES
+                  </strong>
+                </div>
+
+                <div>
+                  <span>04</span>
+                  <strong>
+                    UNFORGETTABLE NIGHTS
+                  </strong>
+                </div>
+              </div>
+            </div>
+
+            <div
+              className={styles.experienceArtwork}
+              aria-label="1759 Empire Braless nightlife"
+            >
+              <div
+                className={
+                  styles.experienceArtworkFrame
+                }
+              >
+                <div
+                  className={
+                    styles.experienceArtworkImage
+                  }
+                />
+
+                <div
+                  className={
+                    styles.experienceArtworkOverlay
+                  }
+                >
+                  <span>
+                    BRALESS
+                  </span>
+
+                  <span>
+                    1759 EMPIRE
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {videoOne && (
+            <div
+              className={
+                styles.experienceFootage
+              }
+            >
+              <CinematicVideo
+                src={videoOne.public_url}
+                start={42}
+                end={47}
+                ariaLabel="Braless nightlife footage"
+              />
+
+              <div
+                className={
+                  styles.experienceFootageOverlay
+                }
+              >
+                <span>
+                  MUSIC · PEOPLE · ENERGY
+                </span>
+
+                <span>
+                  1759 EMPIRE
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* =====================================================
+          MEDIA
+          ===================================================== */}
+
+      <section
+        id="media"
+        className={styles.media}
+      >
+        <div className={styles.sectionInner}>
+          <div className={styles.sectionHeading}>
+            <div>
+              <p className={styles.eyebrow}>
+                BRALESS MEDIA
+              </p>
+
+              <h2>
+                SEE WHAT&apos;S
+                <br />
+                HAPPENING.
+              </h2>
+            </div>
+
+            <p
+              className={
+                styles.sectionSideText
+              }
+            >
+              Real moments. Real energy.
+              Captured from the Braless
+              experience.
+            </p>
+          </div>
+
+          <div className={styles.mediaGrid}>
+            {mediaItems.map((item) => (
+              <article
+                key={item.key}
+                className={styles.mediaTile}
+              >
+                {item.type === "image" ? (
+                  <img
+                    src={item.src}
+                    alt={item.alt}
+                  />
+                ) : (
+                  <>
+                    <CinematicVideo
+                      src={item.src}
+                      start={item.start}
+                      end={item.end}
+                      ariaLabel={item.alt}
+                    />
+
+                    <span
+                      className={
+                        styles.mediaPlay
+                      }
+                      aria-hidden="true"
+                    >
+                      ▶
+                    </span>
+                  </>
+                )}
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================
+          WHAT'S NEXT
+          ===================================================== */}
+
+      <section
+        id="whats-next"
+        className={styles.whatsNext}
+      >
+        <div
+          className={
+            styles.whatsNextAtmosphere
+          }
+        />
+
+        <div className={styles.sectionInner}>
+          <div className={styles.whatsNextGrid}>
+            <div className={styles.eventDetails}>
+              <p className={styles.eyebrow}>
+                WHAT&apos;S NEXT
+              </p>
+
+              <h2>
+                YOUR NEXT
+                <br />
+                NIGHT OUT.
+              </h2>
+
+              <div
+                className={
+                  styles.eventDetailsList
+                }
+              >
+                <div>
+                  <span>DATE</span>
+
+                  <strong>
+                    26 SEPTEMBER 2026
+                    <small>
+                      SATURDAY
+                    </small>
+                  </strong>
+                </div>
+
+                <div>
+                  <span>TIME</span>
+
+                  <strong>
+                    10 PM — LATE
+                  </strong>
+                </div>
+
+                <div>
+                  <span>VENUE</span>
+
+                  <strong>
+                    1759 EMPIRE LOUNGE
+                    <small>
+                      AKUTE · LAGOS
+                    </small>
+                  </strong>
+                </div>
+              </div>
+
+              {whatsappUrl && (
+                <BralessContact1759
+                  whatsapp={whatsappNumber}
+                  gold
+                >
+                  WHATSAPP TO RESERVE
+                </BralessContact1759>
+              )}
+            </div>
+
+            <div
+              className={styles.hotelPanel}
+            >
+              <div
+                className={styles.hotelPanelImage}
+              />
+
+              <div
+                className={
+                  styles.hotelPanelContent
+                }
+              >
+                <p className={styles.eyebrow}>
+                  COMING FOR BRALESS?
+                </p>
+
+                <h3>
+                  STAY AT
+                  <br />
+                  1759 EMPIRE.
+                </h3>
+
+                <p>
+                  Comfort. Class.
+                  Convenience.
+                  <br />
+                  Make it a full experience.
+                </p>
+
+                {whatsappUrl && (
+                  <BralessContact1759
+                    whatsapp={whatsappNumber}
+                    gold
+                    className={styles.hotelCta}
+                  >
+                    BOOK YOUR ROOM
+                  </BralessContact1759>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================
+          FOOTER
+          ===================================================== */}
+
+      <footer className={styles.footer}>
+        <div className={styles.footerInner}>
+          <div className={styles.footerBrand}>
+            <img
+              src="/assets/brand/1759-empire-logo-transparent.png"
+              alt="1759 Empire"
+            />
+          </div>
+
+          <div>
+            BRALESS · AKUTE · LAGOS
+          </div>
+
+          <div>
+            MUSIC. PEOPLE. NIGHTLIFE.
+          </div>
+        </div>
+      </footer>
+    </main>
+  );
 }

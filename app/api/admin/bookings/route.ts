@@ -16,6 +16,10 @@ export async function PATCH(request: Request) {
   const paymentStatus = input?.paymentStatus;
   if (!bookingId || typeof status !== "string" || !statuses.includes(status as BookingStatus) || (paymentStatus !== undefined && paymentStatus !== null && (typeof paymentStatus !== "string" || !payments.includes(paymentStatus as PaymentStatus)))) return NextResponse.json<ActionResponse<never>>({ ok: false, error: "Invalid booking update." }, { status: 400 });
   const { data, error } = await supabase.rpc("admin_update_booking_status", { p_booking_id: bookingId, p_status: status, p_payment_status: paymentStatus || null, p_notes: typeof input?.notes === "string" ? input.notes : null });
-  if (error) return NextResponse.json<ActionResponse<never>>({ ok: false, error: "Booking could not be updated." }, { status: 500 });
+  if (error) {
+    const unavailable = error.message.includes("ROOM_UNAVAILABLE");
+    const inactive = error.message.includes("ROOM_INACTIVE");
+    return NextResponse.json<ActionResponse<never>>({ ok: false, error: unavailable ? "That booking cannot be moved into an active status because the room is already at capacity." : inactive ? "That booking cannot be moved into an active status because its room is inactive." : "Booking could not be updated." }, { status: unavailable || inactive ? 409 : 500 });
+  }
   return NextResponse.json<ActionResponse<Booking>>({ ok: true, data: data as Booking });
 }

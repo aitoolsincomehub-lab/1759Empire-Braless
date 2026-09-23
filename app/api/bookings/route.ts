@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { sendBookingNotificationEmails } from "@/lib/email";
 import { getSupabaseServer } from "@/lib/supabase/server";
-import type { ActionResponse, Booking, BookingRequest } from "@/types";
+import type { ActionResponse, Booking, BookingRequest, SourceType } from "@/types";
 
 function isIsoDate(value: unknown): value is string {
   return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00Z`));
@@ -25,12 +25,13 @@ function validate(payload: unknown): { value?: BookingRequest; errors?: Record<s
   if (!isIsoDate(checkOut)) errors.checkOut = "Choose a valid check-out date.";
   if (isIsoDate(checkIn) && isIsoDate(checkOut) && checkOut <= checkIn) errors.checkOut = "Check-out must be after check-in.";
   if (isIsoDate(checkIn) && checkIn < new Date().toISOString().slice(0, 10)) errors.checkIn = "Check-in cannot be in the past.";
-  if (!Number.isInteger(guests) || guests < 1 || guests > 20) errors.guests = "Guests must be between 1 and 20.";
+  if (!Number.isInteger(guests) || guests < 1 || guests > 2) errors.guests = "Guests must be between 1 and 2.";
   if (guestName.length < 2 || guestName.length > 100) errors.guestName = "Enter the guest's full name.";
   if (!/^[+\d][\d\s().-]{6,24}$/.test(guestPhone)) errors.guestPhone = "Enter a valid phone number.";
   if (guestEmail && !/^\S+@\S+\.\S+$/.test(guestEmail)) errors.guestEmail = "Enter a valid email address.";
   if (Object.keys(errors).length) return { errors };
-  return { value: { roomId, checkIn: checkIn as string, checkOut: checkOut as string, guests, guestName, guestPhone, guestEmail, eventId, notes: typeof input.notes === "string" ? input.notes.trim().slice(0, 500) : undefined, attribution: { source: typeof attribution.source === "string" ? attribution.source.slice(0, 80) : "Website", source_type: attribution.source_type === "event" ? "event" : "website", utm_source: typeof attribution.utm_source === "string" ? attribution.utm_source.slice(0, 100) : undefined, utm_medium: typeof attribution.utm_medium === "string" ? attribution.utm_medium.slice(0, 100) : undefined, utm_campaign: typeof attribution.utm_campaign === "string" ? attribution.utm_campaign.slice(0, 150) : undefined, utm_content: typeof attribution.utm_content === "string" ? attribution.utm_content.slice(0, 150) : undefined } } };
+  const sourceType: SourceType = ["website", "event", "whatsapp", "social", "referral", "direct"].includes(String(attribution.source_type)) ? String(attribution.source_type) as SourceType : "website";
+  return { value: { roomId, checkIn: checkIn as string, checkOut: checkOut as string, guests, guestName, guestPhone, guestEmail, eventId, notes: typeof input.notes === "string" ? input.notes.trim().slice(0, 500) : undefined, attribution: { source: typeof attribution.source === "string" ? attribution.source.slice(0, 80) : "Website", source_type: sourceType, utm_source: typeof attribution.utm_source === "string" ? attribution.utm_source.slice(0, 100) : undefined, utm_medium: typeof attribution.utm_medium === "string" ? attribution.utm_medium.slice(0, 100) : undefined, utm_campaign: typeof attribution.utm_campaign === "string" ? attribution.utm_campaign.slice(0, 150) : undefined, utm_content: typeof attribution.utm_content === "string" ? attribution.utm_content.slice(0, 150) : undefined } } };
 }
 
 export async function POST(request: Request) {
@@ -57,8 +58,15 @@ export async function POST(request: Request) {
     p_utm_content: parsed.value!.attribution?.utm_content || null,
   });
   if (error) {
-    const message = error.message.includes("ROOM_UNAVAILABLE") ? "That room is no longer available for those dates." : "We could not submit the request. Please try again or contact 1759.";
-    return NextResponse.json<ActionResponse<never>>({ ok: false, error: message }, { status: error.message.includes("ROOM_UNAVAILABLE") ? 409 : 500 });
+    const errorMessage = error.message;
+    const unavailable = errorMessage.includes("ROOM_UNAVAILABLE");
+    const inactive = errorMessage.includes("ROOM_INACTIVE");
+    const notFound = errorMessage.includes("ROOM_NOT_FOUND");
+    const invalidDates = errorMessage.includes("INVALID_DATES");
+    const invalidGuests = errorMessage.includes("bookings_guests_check");
+    const message = unavailable ? "That room is no longer available for those dates." : inactive ? "That room is not currently available for booking." : notFound ? "That room could not be found. Please choose another room." : invalidDates ? "Choose a valid check-in and check-out date." : invalidGuests ? "Guests must be between 1 and 2." : "We could not submit the request. Please try again or contact 1759.";
+    const status = unavailable || inactive ? 409 : notFound ? 404 : invalidDates || invalidGuests ? 400 : 500;
+    return NextResponse.json<ActionResponse<never>>({ ok: false, error: message }, { status });
   }
 
   const booking = data as Booking | null;

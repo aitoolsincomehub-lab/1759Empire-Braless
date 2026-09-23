@@ -24,8 +24,10 @@ export default function Book() {
   const [reference, setReference] = useState("");
   const [rooms, setRooms] = useState<Room[]>([]);
   const [roomsMessage, setRoomsMessage] = useState("Loading rooms...");
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [booking, setBooking] = useState<BookingResult | null>(null);
   const checkedAvailability = useRef("");
+  const availabilityRequest = useRef(0);
 
   const update = (key: keyof FormState, value: string) => setForm((current) => ({ ...current, [key]: value }));
 
@@ -34,20 +36,31 @@ export default function Book() {
     const eventId = params.get("event_id");
     if (eventId) update("eventId", eventId);
 
+    const requestId = availabilityRequest.current;
     fetch("/api/rooms").then(async (response) => {
       const result = await response.json() as { ok: boolean; data?: Room[]; error?: string };
       if (!response.ok || !result.ok) throw new Error(result.error);
+      if (availabilityRequest.current !== requestId) return;
       setRooms(result.data || []);
       setRoomsMessage(result.data?.length ? "" : "No rooms are published yet.");
     }).catch((error: unknown) => setRoomsMessage(error instanceof Error ? error.message : "Rooms could not be loaded."));
   }, []);
 
   useEffect(() => {
-    if (!form.checkIn || !form.checkOut || form.checkOut <= form.checkIn) return;
+    if (!form.checkIn && !form.checkOut) return;
+    const requestId = ++availabilityRequest.current;
+    setRooms([]);
+    setForm((current) => current.roomId ? { ...current, roomId: "" } : current);
+    if (!form.checkIn || !form.checkOut || form.checkOut <= form.checkIn) {
+      setAvailabilityLoading(false);
+      return;
+    }
+    setAvailabilityLoading(true);
     setRoomsMessage("Checking availability...");
     fetch(`/api/availability?checkIn=${encodeURIComponent(form.checkIn)}&checkOut=${encodeURIComponent(form.checkOut)}`).then(async (response) => {
       const result = await response.json() as { ok: boolean; data?: Room[]; error?: string };
       if (!response.ok || !result.ok) throw new Error(result.error);
+      if (availabilityRequest.current !== requestId) return;
       setRooms(result.data || []);
       setRoomsMessage(result.data?.length ? "" : "No rooms are available for those dates.");
       const availabilityKey = `${form.checkIn}:${form.checkOut}`;
@@ -55,7 +68,7 @@ export default function Book() {
         checkedAvailability.current = availabilityKey;
         trackEvent("availability_checked", { page: window.location.pathname });
       }
-    }).catch((error: unknown) => setRoomsMessage(error instanceof Error ? error.message : "Availability could not be loaded."));
+    }).catch((error: unknown) => { if (availabilityRequest.current === requestId) setRoomsMessage(error instanceof Error ? error.message : "Availability could not be loaded."); }).finally(() => { if (availabilityRequest.current === requestId) setAvailabilityLoading(false); });
   }, [form.checkIn, form.checkOut]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -165,13 +178,11 @@ export default function Book() {
               <select value={form.guests} onChange={(event) => update("guests", event.target.value)}>
                 <option value="1">1</option>
                 <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
               </select>
             </label>
             <label className="bookingField">
               <span>Room</span>
-              <select required value={form.roomId} onChange={(event) => update("roomId", event.target.value)}>
+              <select required disabled={availabilityLoading} value={form.roomId} onChange={(event) => update("roomId", event.target.value)}>
                 <option value="">{roomsMessage || "Choose a room"}</option>
                 {rooms.map((room) => <option key={room.id} value={room.id}>{room.name}{room.price_per_night > 0 ? ` - ₦${room.price_per_night.toLocaleString()}/night` : ""}</option>)}
               </select>
@@ -195,7 +206,7 @@ export default function Book() {
             </label>
 
             <div className="bookingActions">
-              <button className="button wide premiumBookingButton" type="submit" disabled={state === "loading" || rooms.length === 0}>{state === "loading" ? "Checking availability..." : "Request booking"}</button>
+              <button className="button wide premiumBookingButton" type="submit" disabled={state === "loading" || availabilityLoading || rooms.length === 0}>{state === "loading" ? "Checking availability..." : "Request booking"}</button>
               <Link className="conciergeButton" href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "2349013230224"}?text=${encodeURIComponent("Hello 1759 Empire, I need concierge help with my stay.")}`}><span>WhatsApp Concierge</span><small>Need help before you book? Chat with the 1759 team on WhatsApp.</small></Link>
             </div>
           </form>
@@ -204,7 +215,7 @@ export default function Book() {
             {rooms.length > 0 ? <div className="bookingRoomsFound">
               <span className="roomsFoundLabel">Available rooms</span>
               <div className="bookingRoomsGrid">
-                {rooms.map((room) => <article className="bookingRoomCard" key={room.id} onClick={() => update("roomId", room.id)}>
+                {rooms.map((room) => <article className="bookingRoomCard" key={room.id} aria-disabled={availabilityLoading} onClick={() => { if (!availabilityLoading) update("roomId", room.id); }}>
                   <div className="bookingRoomImage">{isApprovedPublicAsset(room.images?.[0]) ? <img src={room.images[0] as string} alt={room.name} /> : <div className="bookingRoomImageFallback"><span>1759</span><strong>{room.name}</strong><small>Room photography coming soon</small></div>}</div>
                   <div className="bookingRoomBody">
                     <div className="bookingRoomHeader">
@@ -214,7 +225,7 @@ export default function Book() {
                     <p>{room.description}</p>
                     <div className="bookingRoomMeta">
                       <span>{room.amenities?.slice(0, 2).join(" · ")}</span>
-                      <button className="roomSelectButton" type="button">Select</button>
+                      <button className="roomSelectButton" type="button" disabled={availabilityLoading} onClick={(event) => { event.stopPropagation(); update("roomId", room.id); }}>Select</button>
                     </div>
                   </div>
                 </article>)}

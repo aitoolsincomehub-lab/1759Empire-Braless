@@ -1,7 +1,7 @@
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Event, MediaAsset, MenuCategory, MenuItem, Room, SiteSettings } from "@/types";
+import type { Event, MediaAsset, MenuItem, Room, SiteSettings } from "@/types";
 
 export const defaultSettings: SiteSettings = {
   business_name: "1759 Empire Lounge, Hotel & Suites",
@@ -63,7 +63,7 @@ export function resolveEventDate(event: Event) {
 export function findBralessEvent(events: Event[]) {
   return events.find((event) => {
     const title = event.title.toLowerCase();
-    const slug = event.slug.toLowerCase();
+    const slug = event.slug?.toLowerCase() || "";
     return title.includes("braless") || slug.includes("braless") || (event.is_recurring && title.includes("party"));
   }) || null;
 }
@@ -72,7 +72,6 @@ async function readCatalogue(client: SupabaseClient) {
   return Promise.all([
     client.from("rooms").select("*").eq("is_active", true).order("created_at"),
     client.from("menu_items").select("*").eq("is_available", true).order("category").order("name"),
-    client.from("menu_categories").select("*").eq("is_active", true).order("sort_order", { ascending: true }),
     client.from("events").select("*").eq("is_active", true).eq("is_published", true).order("event_date"),
     client.from("site_settings").select("*").eq("id", 1).maybeSingle(),
     client.from("media_assets").select("*").eq("is_published", true).order("display_order", { ascending: true }).order("created_at", { ascending: false }).order("id", { ascending: false }),
@@ -81,11 +80,11 @@ async function readCatalogue(client: SupabaseClient) {
 
 export async function getPublicCatalogue() {
   const supabase = await getSupabaseServer();
-  if (!supabase) return { rooms: [] as Room[], menu: [] as MenuItem[], categories: [] as MenuCategory[], events: [] as Event[], settings: defaultSettings, media: [] as MediaAsset[] };
-  let [roomsResult, menuResult, categoriesResult, eventsResult, settingsResult, mediaResult] = await readCatalogue(supabase);
-  if ([roomsResult, menuResult, categoriesResult, eventsResult, settingsResult, mediaResult].some((result) => result.error)) {
+  if (!supabase) return { rooms: [] as Room[], menu: [] as MenuItem[], events: [] as Event[], settings: defaultSettings, media: [] as MediaAsset[] };
+  let [roomsResult, menuResult, eventsResult, settingsResult, mediaResult] = await readCatalogue(supabase);
+  if ([roomsResult, menuResult, eventsResult, settingsResult, mediaResult].some((result) => result.error)) {
     const admin = getSupabaseAdmin();
-    if (admin) [roomsResult, menuResult, categoriesResult, eventsResult, settingsResult, mediaResult] = await readCatalogue(admin);
+    if (admin) [roomsResult, menuResult, eventsResult, settingsResult, mediaResult] = await readCatalogue(admin);
   }
 
   const normalizedSettings = settingsResult.data
@@ -94,10 +93,11 @@ export async function getPublicCatalogue() {
       )
     : {};
 
+  const menu = (menuResult.data || []) as MenuItem[];
+
   return {
     rooms: (roomsResult.data || []) as Room[],
-    menu: (menuResult.data || []) as MenuItem[],
-    categories: (categoriesResult.data || []) as MenuCategory[],
+    menu,
     events: (eventsResult.data || []).map((event) => ({ ...event, event_date: resolveEventDate(event as Event) })) as Event[],
     settings: { ...defaultSettings, ...normalizedSettings } as SiteSettings,
     media: (mediaResult.data || []) as MediaAsset[],

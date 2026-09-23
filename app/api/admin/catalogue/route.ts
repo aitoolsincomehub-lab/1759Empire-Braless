@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase/server";
 
-const resources = { rooms: "rooms", events: "events", menu: "menu_items", menu_categories: "menu_categories" } as const;
+const resources = { rooms: "rooms", events: "events", menu: "menu_items" } as const;
 type Resource = keyof typeof resources;
 
 async function adminClient() {
@@ -12,6 +12,10 @@ async function adminClient() {
 }
 
 function resource(value: string | null): Resource | null { return value && value in resources ? value as Resource : null; }
+
+function slugify(value: unknown) {
+  return typeof value === "string" ? value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") : "";
+}
 
 export async function GET(request: Request) {
   const { supabase, authorized } = await adminClient();
@@ -34,6 +38,8 @@ export async function POST(request: Request) {
   const data = { ...input };
   delete data.resource;
   delete data.id;
+  if ((table === "rooms" || table === "events") && !data.slug) data.slug = slugify(data.name || data.title);
+  if ((table === "rooms" || table === "events") && !data.slug) return NextResponse.json({ ok: false, error: "A name or title is required." }, { status: 400 });
   const { data: created, error } = await supabase.from(resources[table]).insert(data).select().single();
   if (error) return NextResponse.json({ ok: false, error: "Item could not be created." }, { status: 400 });
   return NextResponse.json({ ok: true, data: created }, { status: 201 });
@@ -50,6 +56,8 @@ export async function PATCH(request: Request) {
   const data = { ...input };
   delete data.resource;
   delete data.id;
+  if (table === "rooms" && data.name && !data.slug) data.slug = slugify(data.name);
+  if (table === "events" && data.title && !data.slug) data.slug = slugify(data.title);
   const { data: updated, error } = await supabase.from(resources[table]).update(data).eq("id", id).select().single();
   if (error) return NextResponse.json({ ok: false, error: "Item could not be updated." }, { status: 400 });
   return NextResponse.json({ ok: true, data: updated });
@@ -63,7 +71,7 @@ export async function DELETE(request: Request) {
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase is not configured." }, { status: 503 });
   if (!authorized) return NextResponse.json({ ok: false, error: "Not authorized." }, { status: 403 });
   if (!table || !id) return NextResponse.json({ ok: false, error: "Invalid catalogue item." }, { status: 400 });
-  const update = table === "rooms" ? { is_active: false } : table === "events" ? { is_active: false } : table === "menu_categories" ? { is_active: false } : table === "menu" ? { is_available: false } : null;
+  const update = table === "rooms" ? { is_active: false } : table === "events" ? { is_active: false } : resources[table] === "menu_items" ? { is_available: false } : null;
   const result = update ? await supabase.from(resources[table]).update(update).eq("id", id) : await supabase.from(resources[table]).delete().eq("id", id);
   if (result.error) return NextResponse.json({ ok: false, error: "Item could not be removed." }, { status: 400 });
   return NextResponse.json({ ok: true });

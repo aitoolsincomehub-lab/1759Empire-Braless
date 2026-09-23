@@ -11,18 +11,19 @@ export default function AdminBookings({ initialBookings }: { initialBookings: Bo
   const [bookings, setBookings] = useState(initialBookings);
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState<string | null>(null);
-  async function update(id: string, status: string, paymentStatus: string) {
+  const [notes, setNotes] = useState<Record<string, string>>(() => Object.fromEntries(initialBookings.map((booking) => [booking.id, booking.notes || ""])));
+  async function update(id: string, status: string, paymentStatus: string, nextNotes?: string) {
     setSaving(id); setMessage("");
     try {
-      const response = await fetch("/api/admin/bookings", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ bookingId: id, status, paymentStatus }) });
-      const result = await response.json() as { ok: boolean; data?: Booking };
-      if (!response.ok || !result.ok) setMessage("We couldn't update that booking. Please try again.");
-      else if (result.data) setBookings((current) => current.map((booking) => booking.id === id ? { ...booking, ...result.data } : booking));
+      const response = await fetch("/api/admin/bookings", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ bookingId: id, status, paymentStatus, ...(nextNotes === undefined ? {} : { notes: nextNotes }) }) });
+      const result = await response.json().catch(() => ({})) as { ok?: boolean; data?: Booking; error?: string };
+      if (!response.ok || !result.ok) setMessage(result.error || "We couldn't update that booking. Please try again.");
+      else if (result.data) { setBookings((current) => current.map((booking) => booking.id === id ? { ...booking, ...result.data } : booking)); setNotes((current) => ({ ...current, [id]: result.data?.notes || "" })); }
     } catch {
       setMessage("We couldn't update that booking. Please try again.");
     } finally {
       setSaving(null);
     }
   }
-  return <div className="adminPanel"><div className="panelHeading"><h2>Recent bookings</h2><span>{bookings.length} shown</span></div>{message && <p className="formError" role="alert">{message}</p>}{bookings.length === 0 ? <p className="muted">No booking requests yet.</p> : <div className="bookingTable">{bookings.map((booking) => <div className="bookingRow" key={booking.id}><div><strong>{booking.guest_name}</strong><span>Reference {booking.reference} · {booking.room?.name || "Room"}</span><span>{booking.check_in} to {booking.check_out} · {booking.guests} guests</span><span>{booking.guest_phone}{booking.guest_email ? ` · ${booking.guest_email}` : ""}</span><span>{booking.source}{booking.event_id ? " · event context" : ""}</span></div><label>Status<select value={booking.status} disabled={saving === booking.id} onChange={(event) => update(booking.id, event.target.value, booking.payment_status)}>{statusOptions.map((option) => <option key={option} value={option}>{option.replace("_", " ")}</option>)}</select></label><label>Payment<select value={booking.payment_status} disabled={saving === booking.id} onChange={(event) => update(booking.id, booking.status, event.target.value)}>{paymentOptions.map((option) => <option key={option} value={option}>{option}</option>)}</select></label></div>)}</div>}</div>;
+  return <div className="adminPanel"><div className="panelHeading"><h2>Recent bookings</h2><span>{bookings.length} shown</span></div>{message && <p className="formError" role="alert">{message}</p>}{bookings.length === 0 ? <p className="muted">No booking requests yet.</p> : <div className="bookingTable">{bookings.map((booking) => <div className="bookingRow" key={booking.id}><div><strong>{booking.guest_name}</strong><span>Reference {booking.reference} · {booking.room?.name || "Room"}</span><span>{booking.check_in} to {booking.check_out} · {booking.guests} guests</span><span>{booking.guest_phone}{booking.guest_email ? ` · ${booking.guest_email}` : ""}</span><span>{booking.source}{booking.event_id ? " · event context" : ""}</span><label className="bookingNotes">Notes<textarea value={notes[booking.id] || ""} onChange={(event) => setNotes((current) => ({ ...current, [booking.id]: event.target.value }))} rows={2} /><button type="button" className="textButton dark" disabled={saving === booking.id} onClick={() => update(booking.id, booking.status, booking.payment_status, notes[booking.id] || "")}>Save notes</button></label></div><label>Status<select value={booking.status} disabled={saving === booking.id} onChange={(event) => update(booking.id, event.target.value, booking.payment_status, notes[booking.id] || booking.notes)}>{statusOptions.map((option) => <option key={option} value={option}>{option.replace("_", " ")}</option>)}</select></label><label>Payment<select value={booking.payment_status} disabled={saving === booking.id} onChange={(event) => update(booking.id, booking.status, event.target.value, notes[booking.id] || booking.notes)}>{paymentOptions.map((option) => <option key={option} value={option}>{option}</option>)}</select></label></div>)}</div>}</div>;
 }
