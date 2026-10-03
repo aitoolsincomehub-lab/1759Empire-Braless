@@ -1,53 +1,59 @@
-# 1759 Empire - Hotel, Lounge & Club
+# 1759 Empire — Braless
 
-Production MVP foundation for 1759 Empire at 197 Ajuwon-Akute Road, Ile-Ise Bus Stop, Akute, Lagos.
+Mobile-first campaign website for **Braless at 1759 Empire**, designed to create a high-impact digital experience for event discovery, campaign storytelling, guest engagement and reservations.
 
-## Stack
-- Next.js + TypeScript
-- Supabase (database/auth/storage)
-- Vercel deployment
-- Paystack is intentionally not enabled; payment status remains admin-managed
+## Project
 
-## Local setup
+Braless is the nightlife and event experience associated with 1759 Empire.
 
-```powershell
+The website was designed to give visitors a fast, visual way to:
+
+- Discover the Braless experience
+- View campaign and event information
+- Explore visual media
+- Contact the venue through WhatsApp
+- Connect the nightlife experience with 1759 Empire hospitality
+
+## Technology
+
+- Next.js
+- React
+- TypeScript
+- Supabase
+- PostgreSQL
+- Vercel
+- Responsive / mobile-first UI
+
+## Development
+
+The project uses a modern Next.js application structure with reusable components, structured data and Supabase-backed functionality.
+
+### Local setup
+
+```bash
 npm install
 Copy-Item .env.example .env.local
 npm run dev
 ```
 
-Open http://localhost:3000
+Open:
 
-## Supabase
-1. Create a Supabase project.
-2. Open SQL Editor.
-3. Run `supabase.sql` once for the core schema.
-4. For the current media/content engine additions, run the focused migration file `supabase.media-content-engine.sql` from the Dashboard SQL Editor.
-5. Add URL + anon key to `.env.local`.
-6. Keep the existing Supabase Storage bucket assumption: use the single `hotel-images` bucket for uploaded image/video assets and keep `storage_path`, `public_url`, `file_size`, `media_type` persisted in the `media_assets` table.
-7. Create staff users in Supabase Auth and set `app_metadata.role` to `admin` using a trusted server-side process.
-8. Configure `NEXT_PUBLIC_WHATSAPP_NUMBER`, `NEXT_PUBLIC_HOTEL_NAME`, and deploy.
+http://localhost:3000
 
-Never expose a service-role key to the browser.
+## Deployment
 
-## Implemented routes
-- `/` public hotel, lounge, Club Klass and events page
-- `/book` validated booking request flow
-- `/api/bookings` server-side booking mutation and atomic overlap check
-- `/admin/login` Supabase Auth login
-- `/admin` protected dashboard overview
-- `/sitemap.xml` and `/robots.txt`
+The production website is deployed through Vercel.
 
-## Important product rule
-Keep the admin simple:
-Dashboard / Rooms / Bookings / Menu / Events / Settings.
+## Developer
 
-Room CRUD should support:
-name, price, number of units, description, amenities, photos, active/inactive.
+**Olubode Ojo**
 
-Availability is derived from bookings overlapping the requested dates. Pending, confirmed, and checked-in bookings reserve units. `create_booking_request` takes a PostgreSQL advisory lock per room before counting overlaps and inserting.
+AI Automation Engineer | Full-Stack Software Developer
 
-## Current handoff blockers
-The supplied repository contains only the logo and exterior image; room, Club Klass, food, gallery, and event files are intentional slots. Live catalogue room selection, admin CRUD screens, uploader UI, event reservations, upload enforcement, owner-confirmed seed data, and configured Supabase QA remain before full owner handoff. No payment provider is connected.
+GitHub: https://github.com/olubodeojo-auto
 
-Do not add full PMS, accounting, inventory, payroll or POS in V1.
+LinkedIn: https://www.linkedin.com/in/olubodeojo
+
+## Related Work
+
+The Braless experience is part of the broader **1759 Empire digital platform**, which includes hospitality, accommodation, events, dining, guest enquiries and digital customer engagement.
