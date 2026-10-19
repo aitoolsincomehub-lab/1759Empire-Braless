@@ -480,16 +480,8 @@ export default async function HomePage() {
                       start={item.start}
                       end={item.end}
                       ariaLabel={item.alt}
+                      playback="manual"
                     />
-
-                    <span
-                      className={
-                        styles.mediaPlay
-                      }
-                      aria-hidden="true"
-                    >
-                      ▶
-                    </span>
                   </>
                 )}
               </article>
