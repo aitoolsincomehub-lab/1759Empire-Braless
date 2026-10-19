@@ -239,17 +239,8 @@ export default async function HomePage() {
       >
         <div className={styles.heroAtmosphere} />
 
-        {videoOne && (
-          <div className={styles.heroMotion}>
-            <CinematicVideo
-              src={videoOne.public_url}
-              start={74}
-              end={82.15}
-              className={styles.heroMotionVideo}
-              ariaLabel="Braless nightlife atmosphere"
-            />
-          </div>
-        )}
+        {/* Keep the hero cinematic using its optimized static atmosphere artwork.
+            The same clip remains available in the experience and media sections on demand. */}
 
         <div className={styles.heroInner}>
           <div className={styles.heroCopy}>
@@ -408,6 +399,8 @@ export default async function HomePage() {
                 src={videoOne.public_url}
                 start={42}
                 end={47}
+                poster={flyer?.public_url}
+                playback="manual"
                 ariaLabel="Braless nightlife footage"
               />
 
@@ -480,16 +473,9 @@ export default async function HomePage() {
                       start={item.start}
                       end={item.end}
                       ariaLabel={item.alt}
+                      playback="manual"
+                      poster={flyer?.public_url}
                     />
-
-                    <span
-                      className={
-                        styles.mediaPlay
-                      }
-                      aria-hidden="true"
-                    >
-                      ▶
-                    </span>
                   </>
                 )}
               </article>
