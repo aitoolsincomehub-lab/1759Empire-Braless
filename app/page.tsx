@@ -481,6 +481,7 @@ export default async function HomePage() {
                       end={item.end}
                       ariaLabel={item.alt}
                       playback="manual"
+                      poster={flyer?.public_url}
                     />
                   </>
                 )}
